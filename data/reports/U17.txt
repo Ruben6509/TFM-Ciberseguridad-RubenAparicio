@@ -1,0 +1,76 @@
+Unit 42 researchers have observed threat actors using malicious JavaScript samples to steal sensitive information by abusing popular survey sites, low-quality hosting and web chat APIs. In some campaigns, attackers created chatbots that they registered to someone noteworthy such as an Australian footballer. Other malware campaigns we saw included both web skimmers injected into compromised sites and traditional phishing sites.
+In this article, we’ll describe some of the tactics used by malicious JavaScript to steal information through several case studies. The case studies show specific examples of how the malware we observed tries to evade traditional static and dynamic analysis by using obfuscation, unusual Document Object Model (DOM) interactions and selective payload detonation.
+We have identified campaigns that collect passwords and credit card information by using our JavaScript malware sandbox. Palo Alto Networks customers receive protection from the threats discussed through several Palo Alto Networks Next-Generation Firewall cloud-delivered security services, including Advanced WildFire and Advanced URL Filtering (AUF). Also, Cortex XDR analytics provides coverage for such threats with network detection and response (NDR) and EDR analytics detectors for instant messaging, exfiltration and C2 techniques.
+| Related Unit 42 Topics | JavaScript Malware, Web Skimmer |
+In our research on malicious JavaScript, we’ve noticed attackers using new techniques to collect and aggregate stolen information including passwords or credit card numbers. Attackers use these exfiltration methods both in traditional phishing pages (where the remote host is malicious) and in skimming pages, where a malicious script has compromised the remote host.
+Detecting classic phishing cases is already difficult on its own. Detecting pages that skimmers have compromised can be even more difficult, because detection logic cannot use any features of the site or URL to aid detection.
+Skimming sites are hosted exactly where they are supposed to be, and therefore detection systems do not notice anything visually different about the hosting site. Phishing pages often hide the exfiltration endpoint to evade detection of the credential collection point, even if the hosting page is detectable.
+To help detect such evasive skimmers and phishing exfiltration attacks, we’ve developed new techniques to analyze JavaScript to track the fine-grained information flowing through the program. By identifying information flows that steal data, our analysis can identify when scripts send sensitive information outside of the script to attackers.
+The Palo Alto Networks AUF service detected over 216,000 distinct exfiltration attacks in one three-month period. We observed the following activity in those attacks:
+- 83% of these attacks steal password information
+- 2% steal credit card information
+- Less than 1% steal browser cookies
+- Around 15% steal other text information on the page
+Our data shows that malicious websites often reuse the same exfiltration endpoint across different domains and URLs. In Figure 1, we see that one endpoint is shared among thousands of different domains and more than 66,000 URLs.
+We see that 33% of exfiltration collection points are shared across more than one domain and 56% are shared across more than one URL. In general, we see more sharing across different URLs than domains, such as when attacks use a distinct URL for each victim. However, we still see many cases where multiple separate domains share a common credential collection point.
+Using our information flow analysis, we have discovered some examples of exfiltration techniques attackers are using to abuse popular, legitimate cloud APIs for the purpose of exfiltrating credentials.
+Figure 2a shows a sample with top-level dynamically generated HTML and Figure 2b shows the same instance obfuscated.
+This malware sample uses a chat platform’s REST API to exfiltrate the data after it is stolen.
+Figure 2b shows that the entire page is dynamically generated with one layer of simple escape obfuscation.
+However, the sample shown in Figure 3 uses multiple layers of obfuscation, some using custom unpacking functions (see the highlighted sd5e95e572) that must be dynamically executed to detonate the encoded payload. Attackers often use this type of obfuscation to evade static analysis, but it is possible to analyze the payload in a dynamic execution sandbox.
+Figure 4 shows multiple public REST APIs used for this purpose. Typically, these are APIs associated with chat programs or surveys.
+Next, we analyze the code.
+Once we analyze the dynamically generated code (shown above in Figure 4), we observe that this sample collects multiple types of sensitive data:
+- PIN
+- Password
+- Customer number
+The sample then sends this data to a specific chatbot that the attacker controls, to harvest the data for further exploitation. This is just one example of attackers abusing cloud APIs to collect exfiltrated credentials. Other examples we see besides chatbot APIs are survey form APIs, low-quality rentable domains and dynamic DNS domains.
+We speculate that attackers use the legitimate cloud API domains to evade analysis by using the cloud website’s higher reputation to prevent firewall blocking. Since threat operators use these endpoints for credential collection, it is difficult to tell that the APIs are being abused without having visibility into the malicious sample.
+Using cloud APIs can also reveal information about the malware author. For example, chatbot endpoints also contain ways to query for information about specific bots. In this case, the chatbot is registered to someone claiming to be an Australian footballer. While this is likely a fake name, some chat endpoints point to a specific chat room that victims can join, or they contain other information.
+Malware samples can also use other techniques to hide exfiltration without being noticed. Figure 5 shows an example of a malware author exfiltrating information by loading a hidden image with query parameters that include the stolen information.
+The hidden img tag causes the browser to send an HTTP request to download the image, but it also sends the stolen data (a credit card number, in this case) to the attacker. We believe this is an attempt to evade detection using atypical exfiltration methods.
+The malware author also encodes the exfiltration domain to avoid detection from simple static analysis and signatures. We’ve seen other examples of attackers using unusual DOM elements to exfiltrate information, such as script, object and img elements.
+Obfuscation is also a well-known technique that continues to allow information stealers to evade detection. What is surprising is that an increasing number of cases do not use code generation. For example, threat authors will execute code with eval, which is a dynamic code generation function that attackers can use to obfuscate the true payload.
+We speculate that when threat authors don’t use dynamic code generation, they are doing so to avoid detection because many detectors monitor dynamically generated code during sandbox analysis. The following is a list of samples (available on VirusTotal) that use exfiltration, which continue to evade many vendors’ detection by using simple obfuscation methods:
+- bf3ab10a5d37fee855a9336669839ce6ad3862ad32f97207d4e959faaba0a3ed
+- 13429eebb74575523b242e16b51eacf287a351c6de04557ec3cc343812aae0cb
+- db346adb1417340e159c45c5e4fdaea039c0edbca6e62ad46aa9aec1cf1273a1
+Obfuscation can prevent detection by most static analysis, but to evade dynamic analysis, malware can selectively detonate its payload. This is not a new phenomenon, but we are seeing specific tactics to evade analysis for JavaScript malware.
+By reducing the number of times when the payload detonates, the malware authors reduce the opportunity for pure dynamic analysis to identify their malware. Forcing payload detonation is one of the key techniques that allows our analysis emulator to detect highly evasive JavaScript.
+At the same time, refusing to detonate payloads is still effective for evading detection by many other vendors. At the time of writing, the samples with the following SHA256 hashes are currently undetected by all vendors on VT:
+- da416dd6d35e2b779d164f06d4798ca2d9a3d3867e7708b11bf6a863a5e7ffc2
+- bf3ab10a5d37fee855a9336669839ce6ad3862ad32f97207d4e959faaba0a3ed
+- 13429eebb74575523b242e16b51eacf287a351c6de04557ec3cc343812aae0cb
+- db346adb1417340e159c45c5e4fdaea039c0edbca6e62ad46aa9aec1cf1273a1
+In the first example, we see the malware only activating on pages that contain keywords. Using the word checkout indicates that the victim might be entering sensitive information.
+We also see malware explicitly checking for analysis artifacts in the execution environment, like that shown in the code in Figure 6. Such artifacts would typically only be present during debugging sessions.
+Malware samples can also check for crawler artifacts that might tell whether the browser ended up on the page organically (like a potential victim would) or with direct navigation (like a security crawler might). The malware will refuse to detonate if it is under analysis by a security crawler (as shown in Figure 7).
+Our JavaScript malware analysis emulator uses a mixture of static and dynamic code analysis to explore the program's behavior. Static analysis typically looks at code as a static artifact. In contrast, dynamic analysis will run the program and observe the behavior of one specific execution path.
+Exploring the complete behavior of a normal, benign JavaScript program is difficult enough due to JavaScript’s dynamic features, which can limit static analysis. Achieving complete dynamic code coverage even on a normal program is often not possible.
+When analyzing malware, the malware author often makes programs intentionally more difficult to analyze to evade detection. Malware authors use obfuscation and analysis evasion techniques to avoid detonating the payload when the sample is under analysis. In addition, malware might require specific user input that is difficult to automate, like solving a captcha or entering specially formatted information.
+Our analysis technique for this research article aims to detect highly evasive malware that tries to hide from static and dynamic analysis. To detect these highly evasive cases, we use a mixture of both static and dynamic methods to simulate approximate program execution across the entire sample under analysis. This has the benefit of unpacking deobfuscation while also forcing the detonation of dynamic evasions.
+After we detonate payloads, our analysis tracks the information flows that occur during program execution. We use a technique called taint tracking, which helps us track the movement of each piece of data in the program. Taint tracking is a general technique that can help identify many different information flow properties of programs.
+In our implementation, for each piece of data in the program we track whether it contains sensitive information, such as passwords or credit card data. During execution, our modified JavaScript environment labels each piece of data to include whether the data is tainted. Then we can track the propagation of the trained data from its origin to the destination.
+During execution, our analysis monitors for when information that is “tainted” with such sensitive information is sent outside of the browser (e.g., via XMLHttpRequest). When we observe a flow of sensitive information to a suspicious exfiltration path, this is a signal that the JavaScript sample is performing an exfiltration attack.
+We’re continuing to see JavaScript information stealers use a variety of techniques to evade detection. In addition to using various obfuscation techniques, they increasingly use ways to evade dynamic analysis by selectively detonating their payload and also use custom loaders to further complicate the detection process.
+The end goal of these stealers is to exfiltrate sensitive information from the victims. We identified evasive techniques that are becoming increasingly popular to exfiltrate sensitive information such as the following:
+- Using popular survey sites
+- Low quality hosting
+- Web chat APIs
+We recommend that security practitioners continuously monitor exfiltration endpoints to identify such malicious use cases. Furthermore, we believe service providers of such services can take measures to proactively weed out malicious parties abusing their platforms.
+Palo Alto Networks customers receive protection from the threats discussed above through our Advanced URL Filtering cloud-delivered security service, which automatically analyzes offline and online information stealing attacks. Also, Cortex XDR analytics provides coverage for such threats with NDR and EDR analytics detectors for instant messaging, exfiltration and C2 techniques using local and global analytics profiles.
+The Advanced WildFire machine-learning models and analysis techniques have been reviewed and updated in light of the IoCs shared in this research.
+We recommend that website operators continue to keep their software up to date, as this is a common vector for attackers to compromise websites to host malicious JavaScript.
+The malware evasion techniques described in this article are general malware behaviors and not limited to the specific campaigns here. However, here is a list of the samples referenced in this article:
+- bf3ab10a5d37fee855a9336669839ce6ad3862ad32f97207d4e959faaba0a3ed
+- 13429eebb74575523b242e16b51eacf287a351c6de04557ec3cc343812aae0cb
+- db346adb1417340e159c45c5e4fdaea039c0edbca6e62ad46aa9aec1cf1273a1
+- da416dd6d35e2b779d164f06d4798ca2d9a3d3867e7708b11bf6a863a5e7ffc2
+- f82ef9a948b4eaf9b7d8cda13c5fa8170c20b72fde564f7d3a0f271644c73b92
+- acf325dad908534bd97f6df0926f30fc7938a1ac6af1cec00aa45bcf63699e24
+- Riding out DOMsday: Toward detecting and preventing DOM cross-site scripting — Melicher, William et al. Network and Distributed System Security Symposium (2018).
+- 25 Million Flows Later - Large-scale Detection of DOM-based XSS — Lekies, Sebastian et al. In Proceedings of the 2013 ACM SIGSAC Conference on Computer & Communications security (CCS '13).
+- SHA256 bf3ab10a5d37fee855a9336669839ce6ad3862ad32f97207d4e959faaba0a3ed — VirusTotal
+- SHA256 13429eebb74575523b242e16b51eacf287a351c6de04557ec3cc343812aae0cb — VirusTotal
+- SHA256 db346adb1417340e159c45c5e4fdaea039c0edbca6e62ad46aa9aec1cf1273a1 — VirusTotal
+- SHA256 da416dd6d35e2b779d164f06d4798ca2d9a3d3867e7708b11bf6a863a5e7ffc2 — VirusTotal

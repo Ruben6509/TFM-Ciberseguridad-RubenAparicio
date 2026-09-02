@@ -1,0 +1,529 @@
+Threat Group Assessment: Muddled Libra (Updated May 16, 2025)
+Menu
+Tools
+ATOMs
+Security Consulting
+About Us
+Under Attack?
+English
+English
+Spanish (LATAM)
+French
+Japanese
+Threat Research Center
+Threat Actor Groups
+Malware
+Malware
+Threat Group Assessment: Muddled Libra (Updated May 16, 2025)
+15
+min read
+Related Products
+Advanced DNS Security
+Advanced URL Filtering
+App-ID
+Cloud-Delivered Security Services
+Cortex XDR
+Cortex XSIAM
+Cortex XSOAR
+Next-Generation Firewall
+Unit 42 Incident Response
+By:
+Amer Elsad
+Kristopher Russo
+Austin Dever
+Published:
+May 16, 2025
+Categories:
+High Profile Threats
+Malware
+Threat Actor Groups
+Tags:
+0ktapus
+ALPHV
+App-ID
+BlackCat ransomware
+MITRE
+Muddled Libra
+Phishing
+Scatter Swine
+Scattered Spider
+Social engineering
+Share
+Executive Summary
+Update May 16, 2025:
+We’ve added an additional section to this article that describes the evolution of Muddled Libra activity since the beginning for 2024. This group is a dynamic one, and as members cycle in and out of the group, its knowledgebase and skill set naturally shift. Its toolbox has now expanded to include:
+Social engineering of both end users and helpdesks
+Traditional phishing
+Inside access to business process outsourcers
+Ransomware affiliations for extortion
+Muddled Libra stands at the intersection of devious social engineering and nimble technology adaptation. With an intimate knowledge of enterprise information technology, this threat group presents a significant risk even to organizations with well-developed legacy cyber defenses.
+Muddled Libra’s tactics can be fluid, adapting quickly to a target environment. They continue to use social engineering as their primary modus operandi, targeting a company's IT help support desk. For example, in under a few minutes, these threat actors successfully changed an account password and later reset the victim’s MFA to gain access to their networks.
+Muddled Libra was first noted for targeting organizations in the software automation, outsourcing and telecommunications verticals. Since then, they’ve expanded their targeting to include the technology, business process outsourcing, hospitality and more recently, financial industries. They show no signs of slowing.
+Unit 42 researchers and responders have investigated interrelated incidents from mid-2022 through the beginning of 2024, which we’ve attributed to the threat group Muddled Libra. Initial attacks were highly structured and favored large business process outsourcing firms serving high-value cryptocurrency holders. We believe that when the threat actors exhausted those targets, they evolved into a ransomware affiliate model with extortion as their key objective.
+In the cases we’ve been involved with, we observed Muddled Libra performing the following activities:
+Using NSOCKS and TrueSocks proxy services
+Creating email rules to forward emails from specific security vendors to the actors to monitor communications and those helping in the investigation
+Deploying a custom virtual machine into the environment
+Using an open-source rootkit, bedevil (
+bdvl
+) to target VMware vCenter servers
+Gaining administrative permissions
+Heavy use of anonymizing proxy services
+We also believe that members of Muddled Libra speak English as a first language, which provides them greater ability to conduct their social engineering attacks with other English speakers. Muddled Libra has also been observed using AI to spoof victims’ voices. Social media videos can be used by attackers to train AI models. The targets we’ve observed seem to be primarily in the U.S.
+Thwarting Muddled Libra requires interweaving tight security controls, diligent awareness training and vigilant monitoring.
+Palo Alto Networks customers are better protected from the threats described in this article through a modern security architecture built around
+Cortex XSIAM
+in concert with
+Cortex XDR
+. The
+Advanced URL Filtering
+and
+DNS Security
+Cloud-Delivered Security Services
+can help protect against command and control (C2) infrastructure, while
+App-ID
+can limit anonymization services allowed to connect to the network.
+Related Unit 42 Topics
+Muddled Libra
+(related to
+Scattered Spider
+,
+Scatter Swine
+),
+0ktapus
+,
+Social Engineering
+Update May 16, 2025
+After a lull in late 2024, Muddled Libra resumed activity. Unit 42 has responded to multiple high-profile attacks, while observing even more attributed to Muddled Libra's parent group, Scattered Spider. Notably, these attacks expand on trade craft pioneered by Muddled Libra.
+Muddled Libra is a subset of a loosely affiliated threat collective known as Scattered Spider, Octo Tempest, Oktapus and other names. Scattered Spider’s resilience lies in the breadth and diversity of its members.
+This group evolved in the Discord and Telegram communication platforms, drawing in members from diverse backgrounds and interests. Attackers in this group specialize in specific skill sets and work together to hone those skills to eventually sell or use in cyberattacks. Channels used by members range from crime-oriented groups like one they call The COM, to enthusiast collectives for popular online games.
+Muddled Libra's core members originally specialized in SIM-swapping, smishing and insider knowledge of IT systems management software. As members cycle in and out of the group, it gains new skills and sunsets less effective ones. The group's toolbox has expanded to include social engineering of both end users and helpdesks, traditional phishing, inside access to business process outsourcers and ransomware affiliations.
+The loose-knit and fluid nature of this group makes it inherently difficult to disrupt. Muddled Libra (
+see
+Unit 42’s Threat Assessment
+and
+research on attacks against CSPs
+) has seen several key members arrested over the past year. However, others with new skills and inside knowledge of new industries have quickly moved in to take their place, and still others have formed entirely new threat clusters.
+Unit 42 has observed new offshoots with unique objectives forming to expand into previously untouched industries. These new groups are using a mix of well worn and novel techniques. Heavily targeted industries include retail and hospitality. However, favored industries and organizations can shift on a whim, and defenders in every vertical should bolster their cyber defenses against these attacks.
+Initial access has shifted away from smishing to social engineering. Threat actors direct social engineering attacks at helpdesks by posing as employees who have forgotten their passwords or at employees directly, with attackers claiming to be from the corporate helpdesk.
+Once inside the environment, attackers have leveraged free or compromised legitimate remote management tools to access customer relationship management (CRM) platforms for sensitive data exfiltration. Muddled Libra attacks have also featured virtual environment administration tools for maximum disruption. This group has a new affiliation with the ransomware-as-a-service group DragonForce for extortion.
+Threat Overview
+The attack style defining Muddled Libra appeared on the cybersecurity radar in late 2022 with the release of the 0ktapus phishing kit. This malware kit offered the following features:
+A prebuilt hosting framework
+Easy C2 connectivity
+Bundled attack templates
+These options allowed attackers to emulate mobile authentication pages cheaply and easily.
+With over 200 realistic fake authentication portals and some targeted
+smishing
+, attackers quickly gathered credentials and multifactor authentication (MFA) codes for over one hundred organizations.
+The speed and breadth of these attacks caught many defenders off-guard. While smishing is not a new tactic, the 0ktapus framework commoditized what would typically require complex infrastructure and advanced technical skills, in a way that granted even low-skilled attackers a high attack success rate.
+The sheer number of targets being hit with this kit created a fair amount of confusion regarding attribution in the research community. Previous reporting by
+Group-IB
+,
+CrowdStrike
+and
+Okta
+has documented and mapped many of these attacks to the following intrusion groups: 0ktapus, Scattered Spider and Scatter Swine.
+While these have been frequently treated as several names for one group, what these names actually define are:
+An attack style using a common toolkit
+A social forum-based collaboration network
+An Agile-like team structure
+Muddled Libra is a distinct group of actors using this tradecraft. In a 2023 blog posted on ALPHV’s leak site, the attackers corroborated this view, claiming that previous researcher attribution models have been non-specific.
+During Unit 42 Incident Response investigations, we identified several cases we attribute to Muddled Libra. Muddled Libra has been responsible for a campaign of complex supply chain attacks, ultimately leading to high-value cryptocurrency targets.
+This group has only intensified their campaign. They are shifting tactics to adapt to improving cyber defenses, and they are targeting to broaden their attack scope.
+Figure 1. Muddled Libra evolved tactics.
+Unit 42 has observed an extensive toolkit used in these attacks. This arsenal ranges from hands-on social engineering and smishing attacks to proficiency with niche penetration testing, forensics tools and even legitimate systems management software. This breadth of tooling gives Muddled Libra an edge over even a robust and modern cyber defense plan.
+In incidents the Unit 42 team has investigated, Muddled Libra has been methodical in pursuing its goals and highly flexible with attack strategies. When an attack tactic is blocked, they have either rapidly pivoted to another vector or modified the target environment to enable their favored path.
+Muddled Libra has also repeatedly demonstrated a strong understanding of the modern incident response (IR) framework. This knowledge allows them to continue progressing toward their goals even as incident responders attempt to expel them from an environment. Once established, this threat group is difficult to eradicate. Unit 42 has observed them joining IR war rooms and creating rules within email security platforms to intercept and redirect incident response-related communication.
+Initially, Muddled Libra preferred targeting a victim’s downstream customers using stolen data and, if allowed, would return repeatedly to the well to refresh their stolen dataset. Using this stolen data, the threat actor could return to prior victims even after the initial incident response.
+Furthermore, Muddled Libra appeared to have clear goals for its breaches versus just capitalizing on opportunistic access. They rapidly sought and stole information on downstream client environments and then used it to pivot into those environments.
+In a notable departure from earlier tactics, in 2023, intelligence indicated that Muddled Libra joined the ALPHV/Blackcat ransomware-as-a-service affiliate program. They wasted no time implementing this new tool set with a radical departure from previous tradecraft in favor of new attacks focused on data theft, encryption and enormous extortion demands.
+The U.S. Justice Department interrupted ALPHV’s operations shortly after these attacks began. Since this action, new Muddled Libra attacks have shifted to data theft with a simple extortion objective. Muddled Libra has demonstrated a strong understanding of their victims’ “line of business” processes, and they strike at the heart of business operations.
+Attack Chain
+While each incident is unique, Unit 42 researchers have identified enough commonalities in tradecraft to attribute multiple incidents to Muddled Libra. Figure 1 shows the attack chain.
+Figure 2. Muddled Libra attack chain.
+We have mapped these to the MITRE ATT&CK
+®
+framework, summarized below.
+Reconnaissance
+Muddled Libra has consistently demonstrated an intimate knowledge of targeted organizations, including employee lists, job roles and cellular phone numbers. In some instances, threat actors likely obtained this data during earlier breaches against upstream targets.
+Threat actors also frequently obtain information packs from illicit data brokers such as the
+now-defunct Genesis and Russian Markets
+. This data is
+typically harvested from
+corporate and personal infected devices using malware such as Raccoon Stealer and
+RedLine Stealer
+.
+With the early advent of bring-your-own-device (BYOD) policies and the popularity of hybrid work solutions, corporate data and credentials are frequently used and cached on personal devices. Decentralizing the management and protection of IT assets creates a lucrative targeting opportunity for information-stealing malware.
+Resource Development
+Lookalike domains used in smishing attacks are a consistent hallmark for Muddled Libra. This tactic is effective since mobile devices frequently truncate links in SMS messages. Malicious domain names frequently use the format of the organization name with a hyphen, followed by a service (like SSO, helpdesk or HR).
+Early clusters of attacks attributed to the 0ktapus campaign consistently used domains registered via Porkbun or Namecheap and hosted on Digital Ocean infrastructure. These domains are short-lived, used only during the initial access phase, and they are quickly taken down before defenders can investigate. Recently, we’ve observed Muddled Libra adding Metaregistrar and Hosting Concepts to their preferred registrar list, and their hosting has moved behind a large content delivery network (CDN) service.
+In many investigations, Unit 42 observed the use of the 0ktapus phishing kit for credential harvesting. Group-IB has done a great deep dive analysis of this versatile kit, which is widely available in the criminal underground. It requires little skill to stand up and configure, making it an ideal tool for highly targeted smishing attacks. Since its introduction, other threat groups have adopted this kit, and it continues to evolve.
+Initial Access
+In all incidents where Unit 42 could determine an initial access vector, smishing and helpdesk social engineering were involved. In most early incidents, the threat actor sent a lure message directly to the targeted employees’ cellphones, claiming they needed to update account information or reauthenticate to a corporate application. Messages contained a link to a spoofed corporate domain designed to emulate a familiar login page.
+Likely due to organizations’ large-scale phase-out of SMS as a secondary authentication factor, Muddled Libra has begun to move away from smishing as an initial entry vector. New cases indicate that this group pervasively uses direct social engineering.
+Helpdesk and customer service agents are particularly high-value targets. Unit 42 has observed Muddled Libra using a combination of open-source intelligence and previously compromised sensitive data to get help desk agents to reset both passwords and MFA on the same call.
+These attacks are convincing and persistent. They focus on wearing the agent’s defenses down, running up the call length and ultimately bypassing security restrictions that could have prevented these attacks.
+Persistence
+Muddled Libra was particularly focused on maintaining access to targeted environments. While threat actors commonly use a free or demo version of a remote monitoring and management (RMM) tool during intrusions, Muddled Libra often installed half a dozen or more of these utilities. They did this to ensure they would maintain a backdoor into the environment even if one were discovered.
+Using commercial RMM tools is particularly problematic as these tools are legitimate, business-critical applications that Muddled Libra abuses. None of these tools are inherently malicious and they are frequently used in the day-to-day administration of many enterprise networks. Defenders should weigh the risks of an outright block versus carefully monitoring their use.
+Observed tools included Zoho Assist, AnyDesk, Splashtop, TeamViewer, ITarian, FleetDeck, ASG Remote Desktop, RustDesk and ManageEngine RMM. Unit 42 recommends organizations block by signer any RMM tools that they have not sanctioned for use within the enterprise.
+Muddled Libra has also demonstrated familiarity with cloud platforms, both hosted and software as a service (SaaS). They will use these platforms to establish a foothold within the organization, as these resources are unlikely to be monitored like traditional assets and systems.
+Unit 42 has a
+separate article
+with much more detail on cloud targeting.
+Notably, recent attacks indicate that long-term persistence is no longer this group’s primary objective. Instead, they’ve moved to a more traditional “encrypt and extort” model. Targeting has broadened to include large organizations more likely to have the capability to pay large ransoms. Once this group learns and understands the infrastructure and software used in an industry, they tend to target other organizations in the same vertical.
+Defense Evasion
+Demonstrating proficiency with many security controls, Muddled Libra evaded common defenses.
+Their tactics have included the following:
+Disabling antivirus and host-based firewalls
+Attempting to delete firewall profiles
+Creating defender exclusions
+Deactivating or uninstalling EDR and other monitoring products
+Standing up unmanaged cloud virtual machines
+Elevating access in virtual desktop environments
+Attackers also re-enabled and used existing Active Directory accounts to avoid triggering common security information and event management (SIEM) monitoring rules. We also observed them operating within endpoint detection and response (EDR) administrative consoles to clear alerts.
+We cover this attack in detail in
+our article
+.
+Muddled Libra has been careful with operational security, consistently using commercial virtual private network (VPN) services to obscure their geographic location and attempt to blend in with legitimate traffic. The group preferred Mullvad VPNin early incidents Unit 42 researchers investigated, but we also observed multiple other vendors, such as ExpressVPN, NordVPN, Ultrasurf, Easy VPN and ZenMate.
+Unit 42 researchers have more recently observed the usage of rotating residential proxy services as well. As reported by
+Brian Krebs in 2021
+, residential proxy services typically hide their code inside browser extensions, allowing operators to lease out residential connections for legitimate and malicious use alike.
+Defenders should look for multiple users authenticating from new residential IPs over short periods.
+Credential Access
+Once attackers captured the credentials they would use for initial access, the attacker took one of two paths. In one case, they continued with the authentication process from a machine they controlled and immediately requested a MFA code. In the other cases, they generated an endless string of MFA prompts until the user accepted one out of fatigue or frustration (aka MFA bombing).
+In cases where MFA bombing was unsuccessful, the threat actor contacted the organization’s help desk, claiming to be the victim. They would then state that their phone was inoperable or misplaced and would request to enroll a new, attacker-controlled MFA authentication device.
+Muddled Libra’s social engineering success is notable. Across many cases, the group demonstrated unusually high comfort in engaging the help desk and other employees over the phone, convincing them to engage in unsafe actions.
+If targeted accounts do not have the desired access, Muddled Libra will use the account for discovery and repeat the process until they have the access necessary for their attack.
+After establishing a foothold, Muddled Libra moves quickly to elevate access. Standard credential-stealing tools employed in this phase included Mimikatz, ProcDump, DCSync, Raccoon Stealer and LAPS Toolkit. When the group could not quickly locate elevated credentials, they turned to Impacket, MIT Kerberos Ticket Manager and NTLM Encoder/Decoder.
+In some incidents, Muddled Libra employed specialized tools to search memory contents for credentials directly using MAGNET RAM Capture and Volatility. As these are legitimate forensics tools that Muddled Libra is abusing, defenders should carefully consider the downsides to blocking them, including the possibility of security team activity generating false positive alerts.
+This tactic raises an important flag for defenders. Even though user accounts might be protected through privileged access management, endpoints often have elevated credentials cached for system management or to run services. Care should be taken to ensure that privileged credentials only have the permissions necessary to perform their intended functions and are closely monitored for deviations from normal behavior.
+Discovery
+Muddled Libra’s discovery methods were consistent from case to case. In our investigations, the group used well-known, legitimate penetration testing tools to map the environment and identify targets of interest. Their toolkit included SharpHound, ADRecon, AD Explorer, Angry IP Scanner, Angry Port Scanner and CIMplant.
+Muddled Libra also proved proficient with commercial systems administration tools such as ManageEngine, LANDESK and PDQ Inventory for discovery and automation. They also used VMware PowerCLI and RVTools in virtual environments.
+Defenders should be vigilant in identifying unsanctioned network scanning and unusual rapid access to multiple systems or access that crosses logical business segments.
+Execution
+In early incidents, Muddled Libra appeared primarily interested in data and credential theft, and we infrequently saw remote execution. However, more recent cases included a BlackCat ransomware component. When needed, the group accomplishes execution with Sysinternals PsExec or Impacket. We also observed Muddled Libra using the victim’s system management tools to execute malicious code. They used captured credentials or authentication hashes for privilege elevation.
+Lateral Movement
+Muddled Libra preferred using remote desktop protocol (RDP) connections from compromised computers for lateral movement inside the target environment. This approach helps to minimize discoverable external network artifacts in logs that could alert defenders and help investigators with attribution.
+Collection
+Muddled Libra is familiar with typical enterprise data management. They’ve successfully located sensitive organizational data in a wide range of common data repositories, both structured and unstructured, including the following:
+Confluence
+Code Management Platforms
+Elastic
+Microsoft Office 365 suite (e.g., SharePoint, Outlook)
+Internal messaging platforms
+They also targeted data in the victim’s environment from typical service desk applications like Zendesk and Jira. Mined data included credentials for further compromise and they directly targeted sensitive and confidential information.
+Unit 42 researchers observed Muddled Libra using the open-source data mining tool Snaffler and native tools to search registries, local drives and network shares for keywords like
+*password*
+, and
+securestring
+. Threat actors then staged compromised data and archived it for exfiltration using WinRAR or PeaZip. They used stolen sensitive data as leverage in extortion demands.
+Defenders should regularly perform keyword searches in their environments to identify improperly stored data and credentials as part of a broader data management and classification strategy.
+Exfiltration
+In several cases, Muddled Libra attempted to establish reverse proxy shells or secure shell (SSH) tunnels for command and control exfiltration. We observed them using tunneling software such as RSocx. Muddled Libra also used common file transfer sites such as
+put[.]io
+,
+transfer[.]sh
+,
+wasabi[.]com
+, or
+gofile[.]io
+to both exfiltrate data and pull down attack tools. We also observed the use of Cyberduck as a file transfer agent.
+Threat actors often abuse, take advantage of or subvert legitimate products such as Cyberduck for malicious purposes. This does not necessarily imply a flaw or malicious quality to the legitimate product being abused.
+Impact
+The early impact directly observed by Unit 42 was some combination of the theft of sensitive data and Muddled Libra leveraging trusted organizational infrastructure for follow-on attacks on downstream customers.
+Later attacks were much more destructive, and they included the following activities:
+Disruption of operations
+Damage to sensitive systems
+Encryption of critical data
+Enormous extortion demands
+Conclusion and Mitigations
+Muddled Libra is a methodical adversary that substantially threatens enterprise organizations across many industries. They are proficient in a range of security disciplines, able to thrive in relatively secure environments and execute rapidly to complete devastating attack chains.
+Muddled Libra doesn’t bring anything new to the table except for the uncanny knack of stringing together weaknesses to disastrous effect. Defenders must combine cutting-edge technology, comprehensive security hygiene and external threats and internal events monitoring. The high-stakes risk of operational disruption and loss of sensitive data is a strong incentive for modernizing information security programs.
+In addition to the mitigation recommendations included in the Attack Chain subsections above, we recommend organizations:
+Implement MFA and single sign-on (SSO) wherever possible – preferably Fast Identity Online (FIDO). In the cases we investigated, Muddled Libra was most successful when they convinced employees to help them bypass MFA. When they could not quickly establish a foothold, they appeared to move on to other targets.
+Defenders should consider implementing security alerting and account lockout on repeated MFA failures.
+Implement comprehensive user awareness training. Muddled Libra is heavily focused on social engineering help desk and other employees via phone and SMS. Employee training on identifying suspicious non-email-based outreach is critical.
+In case of a breach, assume this threat actor knows the modern IR playbook. Consider setting up out-of-band response mechanisms.
+Ensure credential hygiene is up to date. Only grant access when and for as long as necessary.
+Monitoring and managing access to critical defenses and controls is essential to defending against skilled attackers. Rights should be restricted to only what is necessary for each job function. Identity threat detection and response (ITDR) tools such as
+Cortex XDR
+and
+Cortex XSIAM
+should be used to monitor for abnormal behavior.
+Defenders should limit anonymization services allowed to connect to the network, ideally at the firewall by
+App-ID
+.
+To defend against the threats described in this blog, Palo Alto Networks further recommends that organizations employ the following capabilities:
+Network security: delivered through a Next-Generation Firewall (NGFW) configured with machine learning enabled and best-in-class, cloud-delivered security services. This includes, for example, threat prevention, URL filtering, DNS security and a malware prevention engine capable of identifying and blocking malicious samples and infrastructure.
+Endpoint security: delivered through an XDR solution that can identify malicious code through advanced machine learning and behavioral analytics. This solution should be configured to act on and block threats in real-time as they are identified.
+Security automation: delivered through an XSOAR or XSIAM solution capable of providing SOC analysts with a comprehensive understanding of the threat derived by stitching together data from endpoints, network, cloud and identity systems.
+If you think you might have been compromised or have an urgent matter, get in touch with the
+Unit 42 Incident Response team
+or call:
+North America Toll-Free: 866.486.4842 (866.4.UNIT42)
+EMEA: +31.20.299.3130
+APAC: +65.6983.8730
+Japan: +81.50.1790.0200
+Indicators of Compromise
+IPs observed during this activity:
+104.247.82[.]11
+105.101.56[.]49
+105.158.12[.]236
+134.209.48[.]68
+137.220.61[.]53
+138.68.27[.]0
+146.190.44[.]66
+149.28.125[.]96
+157.245.4[.]113
+159.223.208[.]47
+159.223.238[.]0
+162.19.135[.]215
+164.92.234[.]104
+165.22.201[.]77
+167.99.221[.]10
+172.96.11[.]245
+185.56.80[.]28
+188.166.92[.]55
+193.149.129[.]177
+207.148.0[.]54
+213.226.123[.]104
+35.175.153[.]217
+45.156.85[.]140
+45.32.221[.]250
+64.227.30[.]114
+79.137.196[.]160
+92.99.114[.]231
+Additional Resources
+Muddled Libra Discussion With Unit 42 Senior Consultant Stephanie Regan
+– Threat Vector Podcast, Unit 42 on CyberWire Daily
+Exposing Muddled Libra's Meticulous Tactics With Unit 42 Senior Researcher Kristopher Russo
+– Threat Vector Podcast, Unit 42 on CyberWire Daily
+Muddled Libra's Evolution to the Cloud
+– Unit 42, Palo Alto Networks
+Roasting 0ktapus: The phishing campaign going after Okta identity credentials
+– Group-IB
+Not a SIMulation: CrowdStrike Investigations Reveal Intrusion Campaign Targeting Telco and BPO Companies
+– CrowdStrike
+Detecting Scatter Swine: Insights into a Relentless Phishing Campaign
+– Okta
+I Solemnly Swear My Driver Is Up to No Good: Hunting for Attestation Signed Malware
+– Mandiant
+Is Your Browser Extension a Botnet Backdoor?
+– Krebs on Security
+Suspicion stalks Genesis Market’s competitors following FBI takedown
+– The Record, Recorded Future News
+Updated May 16, at 10:12 a.m. PT to include
+the evolution of Muddled Libra activity since the beginning for 2024.
+Back to top
+Tags
+0ktapus
+ALPHV
+App-ID
+BlackCat ransomware
+MITRE
+Muddled Libra
+Phishing
+Scatter Swine
+Scattered Spider
+Social engineering
+Threat Research Center
+Next: DarkCloud Stealer: Comprehensive Analysis of a New Attack Chain That Employs AutoIt
+Table of Contents
+Related Articles
+Russian Global Webmail Espionage
+Phantom Squatting: AI-Hallucinated Domains as a Software Supply Chain Vector
+When “Hi, This Is IT” Comes Through Microsoft Teams
+Related Malware Resources
+High Profile Threats
+July 15, 2026
+The npm Threat Landscape: Attack Surface and Mitigations (Updated July 15)
+Credential Harvesting
+GitHub
+Npm packages
+Read now
+Threat Research
+July 15, 2026
+TuxBot v3: Inside an IoT Botnet Framework With LLM-Assisted Development
+C2
+DGA
+Docker compose
+Read now
+Threat Research
+July 7, 2026
+Vidar Stealer Unmasked: Code Signing Abuse, Go Loaders and File Inflation
+AMSI
+Cryptocurrency
+DLL Sideloading
+Read now
+Threat Research
+June 30, 2026
+Phantom Squatting: AI-Hallucinated Domains as a Software Supply Chain Vector
+Agentic AI
+LLMs
+Malicious Domains
+Read now
+Threat Research
+June 25, 2026
+CL-STA-1062 Targets Southeast Asian Governments and Critical Infrastructure
+Backdoor
+CL-STA-1062
+Malware
+Read now
+Threat Research
+June 23, 2026
+OpenClaw’s Skill Marketplace and the Emerging AI Supply Chain Threat
+Agentic AI
+ClawHavoc
+ClawHub
+Read now
+Threat Research
+June 11, 2026
+Trust No Skill: Integrity Verification for AI Agent Supply Chains
+AI agents
+Credential exfiltration
+LLMs
+Read now
+Threat Research
+June 2, 2026
+Operation FlutterBridge: macOS Malvertising Campaign Spreads New FlutterShell Backdoor
+CL-CRI-1089
+MacOS
+Malvertising
+Read now
+Threat Actor Groups
+May 22, 2026
+Tracking Iranian APT Screening Serpens’ 2026 Espionage Campaigns
+Advanced Persistent Threat
+AppDomainManager
+DLL Sideloading
+Read now
+Threat Research
+May 20, 2026
+Tracking TamperedChef Clusters via Certificate and Code Reuse
+Adware
+Appsuite PDF
+Certificates
+Read now
+Get updates from Unit 42
+Peace of mind comes from staying ahead of threats. Subscribe today.
+Your Email
+Subscribe for email updates to all Unit 42 threat research.
+By submitting this form, you agree to our
+Terms of Use
+and acknowledge our
+Privacy Statement.
+This site is protected by reCAPTCHA and the Google
+Privacy Policy
+and
+Terms of Service
+apply.
+Invalid captcha!
+Subscribe
+Get the latest news, invites to events, and threat alerts
+Enter your email now to subscribe!
+Sign up
+By submitting this form, I understand my personal data will be processed in accordance with
+Palo Alto Networks Privacy Statement
+and
+Terms of Use.
+Sign up
+Products and Services
+AI-Powered Network Security Platform
+Secure AI by Design
+Prisma AIRS
+AI Access Security
+Cloud Delivered Security Services
+Advanced Threat Prevention
+Advanced URL Filtering
+Advanced WildFire
+Advanced DNS Security
+Enterprise Data Loss Prevention
+Enterprise IoT Security
+Medical IoT Security
+Industrial OT Security
+SaaS Security
+Next-Generation Firewalls
+Hardware Firewalls
+Software Firewalls
+Strata Cloud Manager
+SD-WAN for NGFW
+PAN-OS
+Panorama
+Secure Access Service Edge
+Prisma SASE
+Application Acceleration
+Autonomous Digital Experience Management
+Enterprise DLP
+Prisma Access
+Prisma Browser
+Prisma SD-WAN
+Remote Browser Isolation
+SaaS Security
+AI-Driven Security Operations Platform
+Cloud Security
+Cortex Cloud
+Application Security
+Cloud Posture Security
+Cloud Runtime Security
+Prisma Cloud
+AI-Driven SOC
+Cortex XSIAM
+Cortex XDR
+Cortex XSOAR
+Cortex Xpanse
+Unit 42 Managed Detection & Response
+Managed XSIAM
+Next-Generation Identity Security
+Privileged Access Management
+Identity and Access Management
+Endpoint Privilege Manager
+Identity Governance
+Workforce Password Management
+Agentic Identities
+Secrets Management
+Unified Secrets Governance
+Application Credentials Delivery
+Vendor Privileged Access
+Threat Intel and Incident Response Services
+Proactive Assessments
+Incident Response
+Transform Your Security Strategy
+Discover Threat Intelligence
+Company
+About Us
+Careers
+Contact Us
+Corporate Responsibility
+Customers
+Investor Relations
+Location
+Newsroom
+Popular Links
+Blog
+Communities
+Content Library
+Cyberpedia
+Event Center
+Manage Email Preferences
+Products A-Z
+Product Certifications
+Report a Vulnerability
+Sitemap
+Tech Docs
+Unit 42
+Do Not Sell or Share My Personal Information
+Privacy
+Trust Center
+Terms of Use
+Documents
+Copyright © 2026 Palo Alto Networks. All Rights Reserved
+EN
+Select your language
+Your browser does not support the video tag.
+Default Heading
+Read the article
+Seekbar
+Volume

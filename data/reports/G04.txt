@@ -1,0 +1,462 @@
+Mandiant
+Written by: Bavi Sadayappan, Zach Riddle, Jordan Nuce, Joshua Shilko, Jeremy Kennelly
+A version of this blog post was published to the Mandiant Advantage portal on April 18, 2024.
+Executive Summary
+- In 2023, Mandiant observed an increase in ransomware activity as compared to 2022, based on a significant rise in posts on data leak sites and a moderate increase in Mandiant-led ransomware investigations.
+- Mandiant observed an increase in the proportion of new ransomware variants compared to new families, with around one third of new families observed in 2023 being variants of previously identified ransomware families.
+- Actors engaged in the post-compromise deployment of ransomware continue to predominately rely on commercially available and legitimate tools to facilitate their intrusion operations. Notably, we continue to observe a decline in the use of Cobalt Strike BEACON, and a corresponding increase in the use of legitimate remote access tools.
+- In almost one third of incidents, ransomware was deployed within 48 hours of initial attacker access. Seventy-six percent (76%) of ransomware deployments took place outside of work hours, with the majority occurring in the early morning.
+- Mandiant's recommendations to assist in addressing the threat posed by ransomware are captured in our Ransomware Protection and Containment Strategies: Practical Guidance for Hardening and Protecting Infrastructure, Identities and Endpoints white paper.
+Introduction
+Threat actors have remained driven to conduct ransomware operations due to their profitability, particularly in comparison to other types of cyber crime. Mandiant observed an increase in ransomware activity in 2023 compared to 2022, including a 75% increase in posts on data leak sites (DLS), and an over 20% increase in Mandiant-led investigations involving ransomware from 2022 to 2023 (Figure 1). These observations are consistent with other reporting, which shows a record-breaking more than $1 billion USD paid to ransomware attackers in 2023.
+This illustrates that the slight dip in extortion activity observed in 2022 was an anomaly, potentially due to factors such as the invasion of Ukraine and the leaked CONTI chats. The current resurgence in extortion activity is likely driven by various factors, including the resettling of the cyber criminal ecosystem following a tumultuous year in 2022, new entrants, and new partnerships and ransomware service offerings by actors previously associated with prolific groups that had been disrupted.
+This blog post provides an overview of the ransomware landscape and common tactics, techniques, and procedures (TTPs) directly observed by Mandiant in 2023 ransomware incidents. Our analysis of TTPs relies primarily on data from Mandiant incident response engagements and therefore represents only a sample of global ransomware intrusion activity. The majority of these incidents involved the post-compromise deployment of ransomware following network intrusion activity, with many incidents also involving data theft extortion. The impacted organizations were based across Africa, Asia Pacific, Europe, Latin America and the Caribbean, the Middle East, and North America, and within nearly every industry sector.
+Read our Ransomware Protection and Containment Strategies paper for in-depth strategies to defend against ransomware.
+Figure 1: Ransomware incident response investigations, 2018–2023
+Ransomware Landscape in 2023
+Ransomware remains a prominent threat to organizations across all sectors and geographical regions; victims on DLS spanned more than 110 countries in 2023. Ransomware-as-a-service (RaaS) offerings, both new and existing, lower the barrier to entry for threat actors interested in conducting these operations. The 75% increase in victims posted to tracked DLS compared to 2022 illustrates the continued interest in these operations. While the overall mechanics of RaaS operations have remained fairly consistent, some actors have tested new and unique methods to increase extortion pressure on victims and/or to obtain payments.
+- In mid-2023, ALPHV operators created a website purportedly containing searchable victim data and released an application programming interface (API) for their DLS to potentially increase pressure on victims by making their data more easily accessible.
+- In November 2023, in an apparent first, ALPHV/BlackCat-affiliated actors claimed that they filed a complaint with the U.S. Securities and Exchange Commission (SEC) against an alleged victim, MeridianLink, for failing to disclose a data breach stemming from a cyberattack that the gang itself conducted.
+- In 2023, there were multiple reports of ransomware actors targeting patients of impacted healthcare facilities to apply additional pressure on these organizations to pay ransom demands. These tactics included "swatting" patients and contacting patients threatening to leak personal data.
+- Several newer RaaS operations, such as Trigona and Kuiper, accept multiple cryptocurrencies, including Monero. For example, the Kuiper ransomware operators appear to prefer to be paid in Monero given the analyzed ransom notes indicate the ransom demand is increased 20% if victims pay in Bitcoin. The preference for being paid in Monero suggests actors are taking additional steps to obscure their activity.
+Data Leak Sites
+2023 marked the year with the highest volume of posts on shaming sites since we began tracking these sites in Q1 2020, with Q3 2023 breaking the quarter record with more than 1,300 posts (Figure 2). Other indicators also support an increase in overall ransomware activity, including a 15% increase in unique sites with at least one post and an over 30% increase in new DLS in 2023 compared to 2022.
+Approximately 30% of posts in 2023 were on newly identified DLS associated with various ransomware families, including ROYALLOCKER.BLACKSUIT, RHYSIDA, and REDBIKE (aka Akira). Notably, we identified limited overlaps with several of the top new DLS and tracked threat actors and/or previously observed ransomware families (Figure 3). It is plausible that at least some portion of the newly identified DLS activity is the result of previously established actors forming new alliances or rebrands rather than creating completely new offerings.
+Figure 2: Data leak site victims, 2020–2023
+Figure 3: New 2023 DLS with code reuse, actor overlaps, or rebrands
+Figure 4: Number of unique data leak sites active each month
+New Ransomware Families
+The proportion of new ransomware variants compared to new families has steadily increased, with around one third of new families observed in 2023 being variants of previously identified ransomware families (Figure 5). This could suggest that threat actors are using their time and resources to update pre-existing ransomware families rather than creating new families from scratch. Further, since 2021, we have observed an increase in the proportion of ransomware families and variants capable of encrypting Linux and ESXi systems compared to Windows, a trend that continued throughout 2023 (Figure 6). Approximately 70% of new subfamilies in 2023 were designed to target non-Windows systems when a Windows variant already existed, while around 11% of new subfamilies were the result of rebrands. Threat actors have likely continued to target non-Windows systems to increase their potential attack surface and maximize their impact as well as potential ransom demands.
+Figure 5: Newly analyzed ransomware families (this does not reflect the entirety of the ransomware ecosystem)
+Figure 6: Breakdown of ransomware supported operating system per year
+Timing of Ransomware Deployment
+While we have historically identified clear patterns in the most prominent day of the week for ransomware execution and a high volume of activity occurring outside of work hours, ransomware operators appeared to be less deliberate in their timing in 2023. About 75% of ransomware deployments appeared to occur outside of standard business hours, a slight reduction from 2021 and 2022, and ransomware execution was more evenly distributed across days of the week than in prior years (Figure 7).
+Figure 7: Ransomware execution by hour of the day
+Time Elapsed Between Initial Infection and Ransomware Deployment
+The median time between initial access and ransomware deployment increased slightly from five days in 2022 to six days in 2023. In recent years, we have seen a significant reduction in the time between initial access and ransomware deployment. The median time elapsed during ransomware intrusions between 2017 and 2019 was 21 days, which decreased dramatically to just 3.5 days in 2020, before shifting upward to seven days 2021. Incidents that involve data theft extortion continue to take longer than incidents involving just ransomware deployment. In 2023, we observed approximately 59% of incidents involving confirmed or suspected data theft extortion compared to approximately 51% in 2022; this increase is likely reflected in the slight increase in median time in 2023 compared to 2022.
+- In 2023, the number of days elapsed between the first evidence of malicious access and the deployment of ransomware varied widely, ranging from zero to 116 days (Figure 8).
+- In approximately 15% of incidents, ransomware was deployed within one day of initial attacker access and almost one third of incidents involved ransomware execution within the first 48 hours of initial access.
+- In more than 77% of observed incidents, ransomware was deployed within the first 30 days of initial attacker interaction and 54% occurred within the first week.
+- Approximately 59% of 2023 incidents involved confirmed or suspected data theft. The median time between initial access and ransomware deployment in incidents with confirmed or suspected data theft was 6.11 days, while the median time in incidents without data exfiltration was 1.76 days.
+- 2022 incidents had a larger range between incidents with or without data exfiltration, with missions involving data theft having a median time of nine days compared to one day for those without data theft. This could suggest that threat actors are becoming more efficient when performing data theft.
+Figure 8: Days elapsed between initial access and ransomware deployment
+Commonly Observed TTPs
+The following sections discuss trends in the TTPs used by threat actors distributing ransomware post-compromise, and they are organized into corresponding stages of Mandiant's attack lifecycle model (Figure 9). The TTPs outlined in this section were observed by Mandiant during ransomware investigations in 2023.
+Figure 9: Attack lifecycle associated with ransomware incidents observed in 2023
+Initial Access
+The most common initial access vectors in 2023 involved stolen credentials or the exploitation of vulnerabilities in public-facing infrastructure (Figure 10). In numerous incidents, the first evidence of network compromise was an actor's authentication to the victim's virtual private network (VPN) either through possession of legitimate credentials or a successful brute-force attack. We also observed a slight increase in brute-force attacks in 2023 compared to 2022.
+- In almost 40% of incidents where the initial access vector was identified, threat actors used compromised legitimate credentials to gain access to victim environments, either through the use of stolen credentials or brute-force attacks. The vast majority of these incidents involved authentication to a victim's corporate VPN infrastructure.
+- Approximately one fourth of analyzed incidents with a known initial infection vector involved the use of stolen credentials. It is plausible that, in some cases, threat actors are obtaining these credentials via underground forums given that we consistently observe threat actors selling credentials, including logs obtained from infostealers. Further, threat actors have expressed high interest in infostealers, which could be leveraged to obtain credentials.
+- Around 14% of incidents involved the use of brute-force attacks, an increase from 8% of incidents in 2022. In several instances, a threat actor was able to successfully log in via an account with a simple or common password.
+- Vulnerability exploitation of publicly facing systems continues to be a common initial access vector, observed at a slightly increased rate in 2023 compared to 2022 (Table 2). Across analyzed incidents in 2023, threat actors exploited vulnerabilities for initial access in almost 30% of incidents, up from 24% in 2022, but significantly down from over 50% in 2021. Multiple incidents involving vulnerability exploitation for initial access had a total time-to-ransom value that was less than five minutes, suggestive of automated mass exploitation and ransomware deployment to vulnerable systems accessible via the internet.
+- Multiple threat actors exploited CVE-2023-4966 (aka CitrixBleed) to hijack legitimate Citrix NetScaler user sessions. Follow-on activity included deployment of various ransomware families, including AGENDA.RUST, ALPHV, and LOCKBIT.
+- In all observed incidents involving vulnerability exploitation, threat actors exploited known vulnerabilities where exploit or proof-of-concept (PoC) code was publicly available. In one instance, threat actors were suspected to have exploited a 2017 vulnerability in Liferay Portal.
+- While Mandiant did not directly observe any ransomware incidents where threat actors engaged in zero-day exploitation for initial access, public reporting indicated that at least three zero-day vulnerabilities (CVE-2023-28252, CVE-2023-20269, and CVE-2023-24880) were used in incidents involving the deployment of four different ransomware families. FIN11 also continued to exploit zero-day vulnerabilities in file transfer systems, but in operations involving data theft extortion without ransomware deployment.
+- In about 14% of incidents in which the initial access vector was identified, threat actors conducted email, SMS, or voice phishing.
+- QAKBOT campaigns were the initial access vector in multiple BASTA incidents. The QAKBOT payloads were distributed through email spam campaigns via different malicious payloads, including ZIP and OneNote files.
+- In 2023, UNC3944 used SMS phishing operations and social engineering to obtain credentials for initial access, including impersonating employees in phone calls to the victim organization's help desk as part of an attempt to reset passwords and multi-factor authentication (MFA) device configurations.
+- Threat actors also leveraged opportunistic web-based malware distribution to gain initial access to victim environments.
+- UNC4696 leveraged malicious advertisements for popular software such as WinSCP and Advanced IP Scanner to trick victims into downloading a malicious installer, leading to BEACON or a Python-based backdoor. UNC4696 leveraged this access to ultimately deploy ALPHV.
+During 2023, Mandiant also continued to observe threat actors leverage initial access that had been obtained from another threat actor to facilitate ransomware deployment. These initial compromises were typically performed via prominent malware distribution threat clusters.
+- Throughout 2023, we observed numerous UNC4393 BASTA ransomware operations that leveraged initial access obtained via UNC2500 and UNC2633 QAKBOT campaigns. However, following the August 2023 takedown of QAKBOT, we observed UNC2500 distributing DARKGATE in intrusions leading to UNC4393 BASTA ransomware operations.
+- Other notable distribution threat clusters that were observed prior to ransomware deployment included UNC2565 distributing GOOTLOADER, UNC2824 distributing URSNIF, and UNC3525, which offers access to hosts infected with SMOKELOADER.
+Figure 10: Initial intrusion vectors
+Table 1: Initial intrusion vector descriptions
+Establish Foothold
+Threat actors used a combination of legitimate remote access tools, attack frameworks, tunnelers, and valid credentials to establish footholds within victim environments.
+- BEACON remained the most popular attack framework used by threat actors; it was used to establish a foothold in approximately 10% of ransomware engagements in 2023. Other exploitation frameworks, such as BOLDBADGER and METASPLOIT, were observed in a small subset of ransomware incidents. For example, in one LOCKBIT.BLACK intrusion, the actors established a foothold via BOLDBADGER.
+- Threat actors consistently relied on remote management tools for multiple phases of the attack lifecycle, including to establish foothold, maintain presence, and data exfiltration. Commonly used remote management tools included ScreenConnect, Splashtop, Atera, and Anydesk.
+- Threat actors often used compromised RDP and VPN user credentials to establish a foothold. This is consistent with our observations of threat actors frequently using compromised credentials to gain initial access, as threat actors continued to leverage valid credentials to move around the network via Remote Desktop Protocol (RDP). We also observed threat actors creating new user accounts for this phase of the attack lifecycle.
+- UNC3944 modified MFA configurations in multiple incidents as a method to maintain presence. In one incident, they added new MFA devices to compromise accounts.
+- We observed an increase in the usage of web shells for this phase of the attack lifecycle; however, many of these incidents stemmed from an UNC4721 campaign involving the exploitation of Atlassian vulnerabilities to deploy Java-based web shells, ultimately leading to CONTI ransomware.
+- Although not as common, some threat actors deployed backdoors, such as LIGHTDUTY, GOREVERSE, and BANKSHOT, in incidents leading to ransomware deployment.
+Maintain Presence
+Threat actors largely relied on legitimate remote access tools, BEACON, and a variety of tunneler and proxy malware to maintain presence in victim environments. In some cases, they also used built-in Windows persistence mechanisms, created new accounts, or changed passwords of pre-existing accounts.
+- Threat actors have seemingly continued to shift away from using BEACON to maintain presence. In 2023, only 14% of ransomware incidents involved BEACON usage during this phase, compared to 37% in 2022, and more than 50% in 2021.
+- We observed limited use of other post-exploitation C2 frameworks, such as METASPLOIT. For example, in one NOESCAPE incident, the threat actor registered a service for SLIVER.
+- In a CACTUS ransomware incident, threat actors used Metasploit and Meterpreter SSH reverse shells to external attacker-controlled infrastructure.
+- Threat actors continue to show a proclivity for using legitimate remote access software to maintain presence, sometimes introducing multiple different remote access tools in the same environment (Table 3). We identified remote access utilities used to maintain presence in more than 35% of incidents.
+- While less common, some threat actors continue to leverage custom backdoors and malware. For example, FIN8 has used a multi-stage shellcode infection chain leading to the TURBOSHOCK backdoor, which we believe may be exclusive to these threat actors.
+- Threat actors leveraged SSH tunnels and reverse shells. For example, we observed multiple threat actors downloading the BitVise SSH client from the vendor website.
+- A threat actor who deployed CACTUS ran a batch file script that created a scheduled task to execute a reverse shell every 15 minutes.
+- In a LOCKBIT.BLACK intrusion, threat actors configured an SSH tunnel that enabled them to connect directly into the victim network. The actors ran batch scripts that created two scheduled tasks, which ran an OpenSSH server configured to listen on port 2222 and established the outbound SSH connection that forwarded access to port 2222.
+- Threat actors relied on tunnelers to maintain presence in victim environments in approximately 18% of intrusions. SYSTEMBC was the most commonly used tunneler, with Cloudflared, RSOCX, and NGROK also used in multiple incidents.
+- In approximately 17% of incidents, threat actors used their access to create new user accounts—many of which had elevated privileges—to maintain their presence.
+- Threat actors also used built-in Windows persistence mechanisms, such as scheduled tasks, service installations, and registry-based persistence, to persist a variety of malware and scripts. In some cases, the malware itself creates a scheduled task, like in the case of SYSTEMBC.V2 and SYSTEMBC.POWERSHELL.
+Table 3: Legitimate remote access tools used to maintain persistence
+Escalate Privileges
+Threat actors most often escalated privileges in victim environments by obtaining valid credentials, most frequently via MIMIKATZ, although they commonly employed multiple tools and/or tactics in a single intrusion. Other credential theft tools used by threat actors included CLEANBLUFF, LAZAGNE, NANODUMP, and a variety of publicly available tools and scripts. Threat actors also attempted privilege escalation through other methods, including vulnerability exploitation, DPAPI, and kerberoasting attacks.
+- In numerous incidents, the threat actors leveraged MIMIKATZ, a Windows security audit tool that can be used to steal password hashes and dump plaintext passwords extracted from memory to obtain credentials with administrative privileges.
+- Across multiple incidents, threat actors attempted to obtain credentials stored in memory by dumping lsass.exe (Local Security Authority Subsystem Service). In at least one case, we suspect that the threat actors leveraged NANODUMP, a credential theft utility that targets the Windows LSASS process for obtaining memory minidumps. Some threat actors also extracted the ntds.dit Active Directory database and various registry hives, including SAM, System, and Security, to obtain additional credentials.
+- Threat actors leveraged various publicly available tools to access credentials via kerberoasting attacks. These tools have included PowerShell, RUBEUS, and the Invoke-Kerberoast PowerShell cmdlet.
+- Threat actors attempted to exploit vulnerabilities to escalate privileges in a variety of ransomware incidents.
+- In an ALPHV ransomware intrusion, threat actors leveraged CLEANBLUFF, a privilege escalation tool that exploits a vulnerability in the Common Log File System driver component of Windows (CVE-2022-24521).
+- During another incident that involved LOCKBIT ransomware, the threat actors deployed a file that was capable of exploiting CVE-2022-24521 and/or CVE-2021-43226 for privilege escalation.
+- In a BASTA ransomware intrusion, we observed threat actors leverage CVE-2023-28252 to escalate privileges in a victim environment prior to deploying BEACON.
+- During an intrusion involving LOCKBIT.BLACK and LOCKBIT.UNIX ransomware deployment, there was evidence that the threat actors likely leveraged CVE-2023-3539 for privilege escalation.
+- In a WHITERABBIT ransomware intrusion, the threat actors leveraged CVE-2023-3519, which would likely have provided them with access to privileged credentials.
+- Threat actors commonly employed various publicly available tools to obtain valid credentials and/or login to additional accounts.
+- We observed threat actors using AGENDA.RUST, GLOBEIMPOSTER, MALLOX, MEDUSEALOCKER.V2, and PHOBOS leverage the open-source credential theft tool LAZAGNE.
+- Threat actors who later deployed ALPHV.LINUX, ALPHV.SPHYNX, RAGNARLOCKER, and STALEDONUT executed variations of the Veeam-Get-Creds.ps1 script, which is a publicly available script that attempts to recover passwords used by Veeam to connect to remote hosts.
+- Threat actors using ALPHV.LINUX, ALPHV.SPHYNX, LOCKBIT, MEDUSALOCKER.V2, conducted brute-force attacks to access additional systems. For example, in a MEDUSALOCKER.V2 intrusion, the threat actor leveraged NLBRUTE, a Windows-based RDP brute-forcing tool that takes an input of target host addresses, usernames, and passwords.
+- In several ransomware-related intrusions, threat actors leveraged DONPAPI, a credential dumping utility written in Python that allows the gathering of credentials that are protected by DPAPI.
+- In an incident involving LOCKBIT.V2 ransomware, the threat actors leveraged various credential harvesting tools that are publicly available, including LAZAGNE, MIMIKATZ, multiple tools that are available on the NirSoft website, gosecretsdump, and EFSPOTATO.
+- During an intrusion involving REDBIKE.LINUX ransomware, the threat actors used a domain join request to add an ESXi server to the victim domain so they could log in to the ESXi server with domain accounts.
+- In an incident involving PLAYCRYPT ransomware deployment, the threat actors leveraged MIMIKATZ, attempted to dump LSASS via task manager, and recovered the ntds.dit Active Directory database from a volume shadow copy. They also used a more unique technique for privilege escalation, which involved the use of Internal Monologue to retrieve NTLM hashes and credentials.
+Internal Reconnaissance
+Threat actors frequently use built-in Windows utilities as well as publicly available and legitimate tools to facilitate internal reconnaissance activities during ransomware incidents. In several incidents, we observed threat actors searching internal resources, such as SharePoint drives, documentation, and emails for specific information that could support their operations.
+- In approximately 50% of incidents, threat actors relied on publicly available network scanners to perform network reconnaissance in victim environments. Popular scanners included Advanced IP Scanner, Softperfect Network Scanner, and Advanced Port Scanner.
+- In a MALLOX incident, threat actors used Softperfect Network Scanner, Advanced IP Scanner, IPConfig, and manually browsed files and folders on 12 endpoints.
+- In some instances, we observed threat actors leverage web-based management interfaces in order to obtain information from a variety of different applications.
+- In a BLACKBYTE incident, threat actors used the vSphere web console to obtain information on various vSphere objects and traverse directories on a network share.
+- In a LOCKBIT incident, the threat actors used web-based management interfaces to gather information on multiple applications including Veeam backup software and multiple ESXi hosts.
+- UNC3944 used the Azure management interface to download a list of user and role assignments.
+- In multiple incidents, threat actors performed targeted browsing of various internal systems, such as OneDrive and Sharepoint, looking for information related to passwords or internal infrastructure that could support other attack phases.
+- In one instance, threat actors searched a victim's SharePoint for the word "ransomware." While the goal of this search is unclear, it is plausible that the actor was looking for ransomware protection mechanisms employed by the victim and/or cyber insurance/company policies dictating payment protocols in the event of a ransomware event.
+- In a ROYALLOCKER incident, the threat actor searched various internal resources including the Exchange public folders for a specific set of email addresses. They also performed a "Compliance Search"—normally used to support legal discovery (eDiscovery) requests—to target data from more than a dozen Exchange mailboxes.
+- Consistent with previous years, threat actors frequently used both built-in Windows commands and PowerShell commands to gather information about victim infrastructure and hosts. Commonly observed Windows commands included whoami, net, nltest, ipconfig, and ping.
+- Threat actors often deployed publicly available domain reconnaissance tools to perform a variety of tasks, including enumerating network shares, domain computers, and domain users. Popular tools included GHOSTCERT, SHARPSHARES (enumerates network shares), and SHARPHOUND (used to collect Active Directory information for BLOODHOUND).
+- In a PLAYCRYPT attack, the threat actors used AdFind and the Active Directory PowerShell module from RSAT to enumerate domain computers.
+- In a limited number of intrusions, threat actors gathered information about NAS drives. For example, in an ALPHV intrusion, the threat actors downloaded and executed QNAP Qfinder Pro, a utility that provides easy access to view and manage files stored in a NAS. Separately, in a BABLOCK incident, threat actors accessed the victim's Synology NAS storage. These storage drives are likely an attractive target for ransomware operators as they could hold sensitive information for data theft extortion and/or be valuable targets for encryption.
+Lateral Movement
+Lateral movement was most often accomplished using valid credentials from compromised accounts and/or attacker-created accounts in combination with built-in protocols, such as RDP, SSH, or SMB. Many incidents involved a combination of multiple commands, software, tools, and utilities for lateral movement. Threat actors leveraged some lateral movement methods less frequently compared to prior years; for example, the use of BEACON for lateral movement was seen in significantly fewer intrusions involving ransomware in comparison to 2022.
+- In various ransomware intrusions, threat actors relied heavily on Windows RDP and SMB protocols to move laterally across a network using valid and compromised credentials. In multiple incidents, threat actors enabled restricted admin mode for RDP; this enables actors with access to administrative privileges to bypass MFA when moving laterally within the victim environment.
+- PsExec was commonly used to transfer and execute files across multiple intrusions. For example, in an incident involving ALPHV ransomware deployment, the threat actors used PsExec to run a batch script across multiple systems to enable RDP for lateral movement. In a separate incident, the threat actors used PsExec to deploy BEACON across multiple systems prior to ALPHV ransomware deployment.
+- Throughout 2023, threat actors commonly leveraged SSH to move laterally in ransomware incidents, often to gain access to ESXi servers. In several intrusions, threat actors leveraged the open-source PuTTY utility to move laterally over SSH between victim systems. We also observed threat actors leveraging the Bitvise and MobaXterm SSH server/clients in incidents involving various ransomware families.
+- During several intrusions, threat actors leveraged Impacket's smbexec utility for lateral movement. For example, in one ALPHV ransomware intrusion, the threat actors used a modified version of Impacket's smbexec to create a new local admin account named "Admin" and added it to the local administrator's group on a different internal host. The actor then used RDP to leverage the new Admin account and access another system.
+- Across multiple ransomware incidents, threat actors leveraged remote management software such as Splashtop and Screenconnect to access additional internal systems.
+- Threat actors also leveraged several tunneling tools to move laterally, including possible NGROK activity in an intrusion leading to ROYALLOCKER and RSOCX in another incident involving ALPHV.LINUX ransomware deployment.
+- In an incident leading to the deployment of ALPHV ransomware, the threat actors used the proxy malware SYSTEMBC.POWERSHELL for lateral movement.
+Complete Mission
+Ransomware operators routinely conduct multifaceted extortion operations involving data theft as it gives them additional leverage in negotiating a successful ransomware payment. In the following subsections we highlight observations from both the data exfiltration and ransomware deployment phases of these operations. Based on Mandiant incident response engagements in 2023, in aggregate, ALPHV (ALPHV, ALPHV.LINUX, and ALPHV.SPHYNX) and LOCKBIT (LOCKBIT.BLACK, LOCKBIT.V2, and LOCKBIT.UNIX) were the most frequently observed ransomware families, followed by BASTA, REDBIKE, and PHOBOS (Figure 11). This is consistent with our 2022 observations in which ALPHV, LOCKBIT, and BASTA were the ransomware families most frequently observed, beaten out only by HIVELOCKER, which was disrupted in early 2023.
+Figure 11: Distribution of ransomware families observed in 2023 incidents
+Table 4: Ransomware families observed in Mandiant's 2023 incident response investigations
+Data Exfiltration
+In ransomware incidents where data is known or suspected to have been stolen, threat actors have continued to use common strategies to identify, stage, and exfiltrate data. The most common approaches that we observed include the use of legitimate data synchronization tools such as Rclone and MEGASync, file compression using built-in tools or portable versions of WinRar or 7Zip, FTP clients such a FileZilla or WinSCP, and simple keyword searches to identify files to target for theft.
+- Mandiant commonly identified evidence of threat actors using keyword searches to target sensitive files for theft. These keywords varied across intrusions, but were generally related to topics such as general business operations, financial documents, accounting, non-disclosure agreements, confidential information, and credentials or credential stores.
+- In a small number of cases, threat actors used custom data exfiltration tools to steal data from a victim's environment. For example, we observed a threat actor use EXMATTER alongside LOCKBIT.BLACK and a separate threat actor use EXBYTE in a case where BLACKBYTE ransomware was later deployed. In another case where an unknown ransomware was deployed, the threat actor used POWERLIFT to exfiltrate data related to the organization's financial operations and other confidential information.
+- Threat actors most often used common publicly available tools and utilities to exfiltrate data from victim environments. Other common exfiltration mechanisms included files being transferred using an remote access tool, direct upload to cloud file storage via web browser, or the creation of email forwarding rules.
+- We observed Rclone in approximately 30% of intrusions where data theft was confirmed or was suspected. Rclone was used to exfiltrate data to various destinations, including commercial cloud file storage services and attacker-controlled infrastructure. Other data synchronization tools used in this way include MEGASync and restic.
+- FileZilla and/or WinSCP were used in the vast majority of cases where attackers exfiltrated data using an FTP client, although PuTTY (and/or Solar-PuTTY) were also used in a small number of cases.
+- At an ALPHV incident, multiple days after ransomware deployment, the threat actor created a mailtransport rule to BCC all inbound emails from the exchange server to an external email address. This may have been an attempt to exfiltrate additional sensitive information from the victim environment or to track their incident response and recovery efforts.
+Ransomware Deployment
+Threat actors have used diverse tactics to deploy ransomware payloads across victim environments. The most frequently observed methods include manual execution of ransomware payloads by threat actors who have interactive access to hosts via RDP or SSH and the use of PsExec with and without the use of pre-built deployment scripts. Notably, the PsExec utility was used in nearly 40% of the analyzed ransomware intrusions.
+- The mechanism used to deliver preliminary ransomware payloads into a victim environment is often not identified; however, commonly observed mechanisms include the threat actors uploading via an installed remote access tool, or downloading from an actor-controlled SFTP server or a public file-sharing site, such as temp.sh.
+- Threat actors commonly distribute and execute ransomware binaries using built-in commands, most often using PowerShell or batch scripts in tandem with scheduled tasks, Group Policy (GPOs), and/or the common administrative utility PsExec. The scripts using these types of commands to deploy ransomware may not always be detected or forensically recovered, as there are many common mechanisms to enable their execution in memory.
+- We observed PowerShell used in various ways to enable ransomware execution, including its use for manual execution in an active PowerShell sessions (REDBIKE), injecting ransomware into another running process (CRYTOX), initiating a sequence of loaders ultimately leading to a ransomware payload (MALLOX), or more simply to execute ransomware on hosts across a network using PsExec (RHYSIDA).
+- Although scheduled tasks remained the most common persistence mechanism used to manage ransomware execution, in some rare cases, threat actors used other methods for this same purpose. These methods included the use of Bitsadmin jobs and registry Run keys, both of which were employed by actors deploying BASTA ransomware at separate intrusions.
+- In approximately 20% of all ransomware intrusions during 2023, threat actors manually executed ransomware on hosts while logged in interactively via SSH, RDP, or a remote management tool. Manual execution of ransomware payloads occurred disproportionately in cases where a virtualization hypervisor such as ESXi or Hyper-V was targeted for encryption.
+- We observed threat actors deploying ALPHV, BLACKBYTE, RHYSIDA, and LOCKBIT manually execute ransomware on ESXi hypervisors. In one case, the threat actor manually deployed ALPHV to multiple Hyper-V servers in an intrusion where they otherwise deployed ransomware using Group Policy.
+- We observed threat actors deploying LOKILOCKER, REDBIKE, STOP, MEDUSALOCKER, GLOBEIMPOSTER, AGENDA, BASTA, ALPHV, WHITERABBIT, LOCKBIT, and PLAYCRYPT manually execute ransomware on some or all hosts impacted at intrusions. In one notable case, a threat actor deploying LOCKBIT manually executed their ransomware on a host 30 minutes prior to automated deployment via batch scripts, presumably as a test of the network's defenses.
+Anti-Detection and Analysis Tactics
+Threat actors may take additional steps to ensure their ransomware can execute unabated and that their efforts cannot easily be undone by the victim. These actions may include disabling and deleting backups, disabling security software, clearing logs, and stopping processes and services that may interfere with file encryption.
+- Threat actors used various methods to disable or tamper with Windows Defender or other endpoint protection software.
+- We observed threat actors use multiple publicly available tools to tamper with endpoint protection software prior to ransomware deployment, such as PrivacySexy, dControl, and IObit Unlocker.
+- Threat actors regularly leveraged simple built-in commands or custom scripts to disable or tamper with endpoint protection software. This has commonly included the use of simple batch scripts, PowerShell commands and/or scripts, and the Set-MpPreference PowerShell cmdlet.
+- We observed threat actors subvert victim organizations' administrative software in multiple ways including by adding malicious files to endpoint protection exclusion lists and altering Group Policy Objects (GPOs) and Microsoft Intune configurations to disable endpoint protection software.
+- In their attempts to hinder forensic analysis and ransomware recovery efforts, threat actors associated with nearly every major ransomware brand cleared local Windows event logs and/or deleted volume shadow copies on impacted systems; observed ransomware families across these many cases included PHOBOS, CACTUS, RHYSIDA, BASTA, TRUECRYPT, LOCKBIT, ALPHV, PLAYCRYPT, MALLOX, BABUK, BABLOCK, REDBIKE, and AGENDA.
+Tool Prevalence
+Throughout 2023, threat actors conducting ransomware intrusions continued to leverage a diverse set of tools, likely due to the variety of teams and individuals engaging in this activity. Despite these variations, a broad analysis of tool prevalence used across these attacks reveals a few clear trends. The most notable year-over-year trend is simply that many attackers have done very little to evolve their toolkits, and we continue to see many of the same common tools at similar rates in 2023 as we did across 2022. Despite this uniformity, there have been a few notable shifts in tool use, including a decrease in threat actor reliance on BEACON and a commensurate increase in their use of remote management tools.
+- We continue to observe a decline in BEACON usage in ransomware operations following the same trend across 2022. A small number of threat actors have adopted other post-exploitation frameworks, such as SLIVER and BOLDBADGER; however, an increasing number appear to be shifting toward the use of legitimate remote access tools.
+- We observed a 50% decrease in BEACON usage by actors deploying ransomware in 2023 compared to 2022, with it only being used in approximately 20% of intrusions. By contrast, BEACON was observed at roughly 40% and 60% of intrusions by actors deploying ransomware in 2022 and 2021, respectively.
+- Threat actors have increased their reliance on remote management tools in ransomware operations. We observed legitimate remote access tools being used at approximately 41% of intrusions in 2023 compared to 23% of intrusions in 2022. Notably, in 2023, the percentage of intrusions where AnyDesk was used almost doubled.
+- Threat actors expanded the variety of legitimate remote management tools used in 2023. In 2023, we observed 14 different remote management tools used in intrusions, which was double the number observed in 2022. Newly observed remote management tools include RustDesk, LevelRMM, and eHorus.
+- During 2023, in more than 15% of incidents threat actors brought more than one remote management utility into the victim environment, a slight increase of 3% from 2022.
+- While RaaS operations have offered custom data exfiltration tools, we have rarely directly observed these in ransomware intrusions. However, in 2023, we identified a small subset of intrusions leveraging custom tools to facilitate data exfiltration, including EXBYTE, POWERLIFT, and EXMATTER.
+- Threat actors continued to use many common tools at similar rates across 2022 and 2023, including network scanners, PsExec, and Rclone.
+- We observed popular network scanning tools, including SoftPerfect Network Scanner, Advanced IP Scanner, and Advanced Port Scanner, in approximately half of all ransomware incidents.
+- The prevalence of PsExec remains consistent at around 40% of intrusions, and threat actors used Rclone in around 20% of ransomware incidents.
+Outlook and Implications
+Despite some apparent experimentation with extortion tactics, ranging from making stolen data more accessible to overtly aggressive techniques such as threats to swat hospitals, the TTPs used by threat actors during ransomware intrusions have remained largely consistent. The observed increasing reliance on legitimate tools likely reflects efforts by attackers to conceal their operations from detection mechanisms and reduce the time and resources required to develop and maintain custom tools. Similarly, while we still consistently see vulnerability exploitation as a popular method to gain initial access to a victim environment, threat actors more commonly relied on known vulnerabilities. This is a notable shift from the past when multiple major threat actors were deploying custom malware and acquiring zero-day exploits, although FIN11 continued to do so in incidents involving data theft without ransomware deployment. Recent evidence also suggests that threat actors associated with BASTA ransomware had access to a zero-day exploit but to support privilege escalation. It is plausible that some threat actors have chosen to invest in other aspects of the operation given the wide availability of other initial access methods that are typically less costly.
+Significant law enforcement actions against two of the most prolific RaaS groups, ALPHV and LOCKBIT, disrupted the ransomware ecosystem in late 2023 and early 2024. While the impact of these operations is yet to be fully understood, previous reactions to disruptive actions suggest that threat actors are resilient in the face of obstacles. However, we have observed at least some short term impacts, including ALPHV dropping out of the top three most prolific DLS, based on volume of posts in Q1 2024. Further, some new ransomware offerings, such as Ransomhub, are attempting to recruit affiliates that have been impacted by recent shutdowns or exit scams. Notably, this was a tactic employed by the Lockbit RaaS, as identified in the recent indictment of the actor ‘LockBitSupp’. We also continue to observe threat actors claiming to use multiple ransomware families simultaneously, providing them some level of stability to weather possible disruptions to RaaS offerings. In 2024, over 20 new DLS emerged, which underscores that threat actors have several alternatives to choose from if they wish to continue operations; notably, this is a pace that if continues, will outnumber the volume of new sites observed in 2023. Consequently, we expect that the threat actors impacted by recent actions will likely in time be able to recover and continue to engage in ransomware and extortion activity.
+Read our Ransomware Protection and Containment Strategies paper for in-depth strategies to defend against ransomware.
+Technical Appendix
+MITRE ATT&CK Mapping
+The following techniques were associated with ransomware incidents observed by Mandiant in 2023. Techniques that were commonly observed are highlighted in bold.
+Resource Development
+- T1583 Acquire Infrastructure
+- T1583.001 Domains
+- T1583.003 Virtual Private Server
+- T1583.008 Malvertising
+- T1584 Compromise Infrastructure
+- T1587 Develop Capabilities
+- T1587.002 Code Signing Certificates
+- T1587.003 Digital Certificates
+- T1588 Obtain Capabilities
+- T1588.001 Malware
+- T1588.002 Tool
+- T1588.005 Exploits
+- T1588.004 Digital Certificates
+- T1608 Stage Capabilities
+- T1608.001 Upload Malware
+- T1608.002 Upload Tool
+- T1608.003 Install Digital Certificate
+- T1608.006 SEO Poisoning
+- T1650 Acquire Access
+Initial Access
+- T1078 Valid Accounts
+- T1078.004 Cloud Accounts
+- T1133 External Remote Services
+- T1189 Drive-by Compromise
+- T1190 Exploit Public-Facing Application
+- T1566 Phishing
+- T1566.001 Spearphishing Attachment
+- T1566.002 Spearphishing Link
+- T1566.004 Spearphishing Voice
+Execution
+- T1047 Windows Management Instrumentation
+- T1053 Scheduled Task/Job
+- T1053.003 Cron
+- T1053.005 Scheduled Task
+- T1059 Command and Scripting Interpreter
+- T1059.001 PowerShell
+- T1059.003 Windows Command Shell
+- T1059.004 Unix Shell
+- T1059.005 Visual Basic
+- T1059.006 Python
+- T1569.002 Service Execution
+- T1204 User Execution
+Persistence
+- T1037 Boot or Logon Initialization Scripts
+- T1053 Scheduled Task/Job
+- T1053.003 Cron
+- T1053.005 Scheduled Task
+- T1078 Valid Accounts
+- T1078.002 Domain Accounts
+- T1078.003 Local Accounts
+- T1078.004 Cloud Accounts
+- T1098 Account Manipulation
+- T1098.004 SSH Authorized Keys
+- T1098.005 Device Registration
+- T1133 External Remote Services
+- T1136 Create Account
+- T1136.001 Local Account
+- T1136.002 Domain Account
+- T1505 Server Software Component
+- T1505.003 Web Shell
+- T1543 Create or Modify System Process
+- T1543.002 Systemd Service
+- T1543.003 Windows Service
+- T1546 Event Triggered Execution
+- T1546.003 Windows Management Instrumentation Event Subscription
+- T1546.012 Image File Execution Options Injection
+- T1547 Boot or Logon Autostart Execution
+- T1547.001 Registry Run Keys / Startup Folder
+- T1547.004 Winlogon Helper DLL
+- T1547.009 Shortcut Modification
+- T1556 Modify Authentication Process
+- T1556.006 Multi-Factor Authentication
+- T1574 Hijack Execution Flow
+- T1574.011 Services Registry Permissions Weakness
+Privilege Escalation
+- T1037 Boot or Logon Initialization Scripts
+- T1053 Scheduled Task/Job
+- T1053.003 Cron
+- T1053.005 Scheduled Task
+- T1055 Process Injection
+- T1068 Exploitation for Privilege Escalation
+- T1078 Valid Accounts
+- T1078.002 Domain Accounts
+- T1078.004 Cloud Accounts
+- T1134 Access Token Manipulation
+- T1134.001 Token Impersonation/Theft
+- T1484 Domain Policy Modification
+- T1484.001 Group Policy Modification
+- T1543 Create or Modify System Process
+- T1543.002 Systemd Service
+- T1543.003 Windows Service
+- T1546 Event Triggered Execution
+- T1546.003 Windows Management Instrumentation Event Subscription
+- T1546.012 Image File Execution Options Injection
+- T1547 Boot or Logon Autostart Execution
+- T1547.001 Registry Run Keys / Startup Folder
+- T1547.004 Winlogon Helper DLL
+- T1547.009 Shortcut Modification
+- T1548 Abuse Elevation Control Mechanism
+- T1548.002 Bypass User Account Control
+- T1574 Hijack Execution Flow
+- T1574.011 Services Registry Permissions Weakness
+Defense Evasion
+- T1006 Direct Volume Access
+- T1027 Obfuscated Files or Information
+- T1027.001 Binary Padding
+- T1027.002 Software Packing
+- T1027.004 Compile After Delivery
+- T1027.008 Stripped Payloads
+- T1027.009 Embedded Payloads
+- T1027.010 Command Obfuscation
+- T1036 Masquerading
+- T1036.001 Invalid Code Signature
+- T1036.005 Match Legitimate Name or Location
+- T1055 Process Injection
+- T1070 Indicator Removal
+- T1070.001 Clear Windows Event Logs
+- T1070.004 File Deletion
+- T1070.005 Network Share Connection Removal
+- T1070.006 Timestomp
+- T1070.007 Clear Network Connection History and Configurations
+- T1070.008 Clear Mailbox Data
+- T1070.009 Clear Persistence
+- T1078 Valid Accounts
+- T1078.002 Domain Accounts
+- T1078.003 Local Accounts
+- T1078.004 Cloud Accounts
+- T1112 Modify Registry
+- T1127 Trusted Developer Utilities Proxy Execution
+- T1127.001 MSBuild
+- T1134 Access Token Manipulation
+- T1134.001 Token Impersonation/Theft
+- T1140 Deobfuscate/Decode Files or Information
+- T1202 Indirect Command Execution
+- T1207 Rogue Domain Controller
+- T1218 System Binary Proxy Execution
+- T1218.001 Compiled HTML File
+- T1218.005 Mshta
+- T1218.007 Msiexec
+- T1218.010 Regsvr32
+- T1218.011 Rundll32
+- T1218.014 MMC
+- T1222 File and Directory Permissions Modification
+- T1222.001 Windows File and Directory Permissions Modification
+- T1222.002 Linux and Mac File and Directory Permissions Modification
+- T1484 Domain Policy Modification
+- T1484.001 Group Policy Modification
+- T1548 Abuse Elevation Control Mechanism
+- T1548.002 Bypass User Account Control
+- T1550 Use Alternate Authentication Material
+- T1550.002 Pass the Hash
+- T1553 Subvert Trust Controls
+- T1553.002 Code Signing
+- T1553.005 Mark-of-the-Web Bypass
+- T1556 Modify Authentication Process
+- T1556.002 Password Filter DLL
+- T1556.003 Pluggable Authentication Modules
+- T1556.006 Multi-Factor Authentication
+- T1562 Impair Defenses
+- T1562.001 Disable or Modify Tools
+- T1562.002 Disable Windows Event Logging
+- T1562.004 Disable or Modify System Firewall
+- T1562.010 Downgrade Attack
+- T1564 Hide Artifacts
+- T1564.001 Hidden Files and Directories
+- T1564.003 Hidden Window
+- T1564.010 Process Argument Spoofing
+- T1574 Hijack Execution Flow
+- T1574.011 Services Registry Permissions Weakness
+Credential Access
+- T1003 OS Credential Dumping
+- T1003.001 LSASS Memory
+- T1003.002 Security Account Manager
+- T1003.003 NTDS
+- T1003.006 DCSync
+- T1003.008 /etc/passwd and /etc/shadow
+- T1110 Brute Force
+- T1110.001 Password Guessing
+- T1110.002 Password Cracking
+- T1110.004 Credential Stuffing
+- T1111 Multi-Factor Authentication Interception
+- T1187 Forced Authentication
+- T1539 Steal Web Session Cookie
+- T1552 Unsecured Credentials
+- T1552.001 Credentials In Files
+- T1552.002 Credentials in Registry
+- T1552.003 Bash History
+- T1552.004 Private Keys
+- T1555 Credentials from Password Stores
+- T1555.003 Credentials from Web Browsers
+- T1555.004 Windows Credential Manager
+- T1555.005 Password Managers
+- T1556 Modify Authentication Process
+- T1556.002 Password Filter DLL
+- T1556.003 Pluggable Authentication Modules
+- T1556.006 Multi-Factor Authentication
+- T1558 Steal or Forge Kerberos Tickets
+- T1558.003 Kerberoasting
+- T1621 Multi-Factor Authentication Request Generation
+Discovery
+- T1007 System Service Discovery
+- T1012 Query Registry
+- T1016 System Network Configuration Discovery
+- T1016.001 Internet Connection Discovery
+- T1018 Remote System Discovery
+- T1033 System Owner/User Discovery
+- T1046 Network Service Discovery
+- T1049 System Network Connections Discovery
+- T1057 Process Discovery
+- T1069 Permission Groups Discovery
+- T1069.001 Local Groups
+- T1069.002 Domain Groups
+- T1069.003 Cloud Groups
+- T1082 System Information Discovery
+- T1083 File and Directory Discovery
+- T1087 Account Discovery
+- T1087.001 Local Account
+- T1087.002 Domain Account
+- T1087.004 Cloud Account
+- T1135 Network Share Discovery
+- T1201 Password Policy Discovery
+- T1482 Domain Trust Discovery
+- T1518 Software Discovery
+- T1518.001 Security Software Discovery
+- T1615 Group Policy Discovery
+Lateral Movement
+- T1021 Remote Services
+- T1021.001 Remote Desktop Protocol
+- T1021.002 SMB/Windows Admin Shares
+- T1021.004 SSH
+- T1021.005 VNC
+- T1021.006 Windows Remote Management
+- T1021.007 Cloud Services
+- T1219 Remote Access Software
+- T1550 Use Alternate Authentication Material
+- T1550.002 Pass the Hash
+- T1563 Remote Service Session Hijacking
+- T1563.002 RDP Hijacking
+- T1570 Lateral Tool Transfer
+Collection
+- T1005 Data from Local System
+- T1039 Data from Network Shared Drive
+- T1074 Data Staged
+- T1074.001 Local Data Staging
+- T1114 Email Collection
+- T1114.001 Local Email Collection
+- T1115 Clipboard Data
+- T1119 Automated Collection
+- T1213 Data from Information Repositories
+- T1213.002 Sharepoint
+- T1213.003 Code Repositories
+- T1560 Archive Collected Data
+- T1560.001 Archive via Utility
+- T1602 Data from Configuration Repository
+- T1602.002 Network Device Configuration Dump
+Command and Control
+- T1071 Application Layer Protocol
+- T1071.001 Web Protocols
+- T1071.002 File Transfer Protocols
+- T1071.004 DNS
+- T1090 Proxy
+- T1090.003 Multi-hop Proxy
+- T1095 Non-Application Layer Protocol
+- T1105 Ingress Tool Transfer
+- T1219 Remote Access Software
+- T1571 Non-Standard Port
+- T1572 Protocol Tunneling
+- T1573 Encrypted Channel
+- T1573.002 Asymmetric Cryptography
+Exfiltration
+- T1020 Automated Exfiltration
+- T1041 Exfiltration Over C2 Channel
+- T1048 Exfiltration Over Alternative Protocol
+- T1567 Exfiltration Over Web Service
+- T1567.002 Exfiltration to Cloud Storage
+Impact
+- T1485 Data Destruction
+- T1486 Data Encrypted for Impact
+- T1489 Service Stop
+- T1490 Inhibit System Recovery
+- T1491 Defacement
+- T1491.001 Internal Defacement
+- T1491.002 External Defacement
+- T1529 System Shutdown/Reboot
+- T1531 Account Access Removal
+- T1657 Financial Theft

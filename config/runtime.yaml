@@ -1,0 +1,30 @@
+schema_version: "1.0"
+implementation_id: "tfm_cti_rag_compact"
+index:
+  chroma_path: "data/chroma"
+  collection_name: "tfm_cti_dataset_maestro_v0_1"
+  distance_function: "cosine"
+  exact_cve_sqlite: "data/cve_exact.sqlite"
+  token_counts: "data/token_counts.json"
+  manifest: "data/manifest.json"
+  cve_snapshot: "cve_2026-08-09_0000Z"
+embedding:
+  model: "Qwen/Qwen3-Embedding-0.6B"
+  dimensions: 1024
+  local_only: false
+retrieval:
+  top_k: 10
+  maximum_evidence_tokens: 4500
+  semantic_routes:
+    attack_semantic: "attack"
+    cti_semantic: "cti"
+generation:
+  endpoint: "http://127.0.0.1:1234/v1"
+  model: "tfm-gemma-4-12b-qat-q4_0"
+  context_length: 8192
+  temperature: 1.0
+  top_p: 0.95
+  top_k: 64
+  max_tokens: 2048
+  reasoning_effort: "none"
+  tool_choice: "none"

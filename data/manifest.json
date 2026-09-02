@@ -1,0 +1,65 @@
+{
+  "schema_version": "1.0",
+  "dataset_id": "dataset_maestro_v1.0",
+  "status": "frozen_and_evaluated",
+  "frozen_at_utc": "2026-08-11T19:33:57.370571Z",
+  "source_cutoffs": {
+    "cti_capture": "2026-08-11",
+    "attack": "Enterprise ATT&CK 19.1",
+    "cve": "cve_2026-08-09_0000Z"
+  },
+  "counts": {
+    "reports": 50,
+    "ioc_records": 604,
+    "ioc_included": 531,
+    "ioc_excluded": 73,
+    "cve_cases": 150,
+    "attack_cases": 100,
+    "cti_qa_cases": 50
+  },
+  "partitions": {
+    "reports": {"development": 10, "evaluation": 40},
+    "cve_real": {"development": 20, "evaluation": 80},
+    "cve_nonexistent": {"development": 10, "evaluation": 40},
+    "attack": {"development": 20, "evaluation": 80},
+    "cti_qa": {"development": 10, "evaluation": 40}
+  },
+  "paths": {
+    "reports": "data/reports",
+    "dataset_workbook": "data/Dataset_Maestro.xlsx",
+    "semantic_index": "data/chroma",
+    "exact_cve_index": "data/cve_exact.sqlite",
+    "token_counts": "data/token_counts.json",
+    "results": "results"
+  },
+  "index": {
+    "collection_name": "tfm_cti_dataset_maestro_v0_1",
+    "canonical_documents": 747,
+    "semantic_chunks": 1346,
+    "chroma_documents": 1346,
+    "cve_exact_records": 374332,
+    "embedding_dimensions": 1024,
+    "fragmentation": {
+      "id": "C-M",
+      "target_tokens": 400,
+      "max_tokens": 550,
+      "overlap_tokens": 80
+    },
+    "embedding": {
+      "model": "Qwen/Qwen3-Embedding-0.6B",
+      "revision": "97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3",
+      "normalize": true
+    },
+    "hashes": {
+      "chroma_tree": "ab1407b36b8ee28f128b7ebbc5fc811d3a9c0ea2676d54b1a2ddaf848ba8545c",
+      "chroma_tree_evaluation": "9a326942095b6a8a2eb28ea3b34b70a4390fbee3b24340778bc79f41fe541d9d",
+      "cve_exact": "a826c2b7909fb3dd3da57fb948fea47e6b9a69c7ee1e79d561f57b0f5b36277f"
+    }
+  },
+  "review": {
+    "pending_decisions": 0,
+    "validation_checks": 33,
+    "validation_failures": 0
+  },
+  "final_evaluation_executed": true
+}

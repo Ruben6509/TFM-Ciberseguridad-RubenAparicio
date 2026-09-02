@@ -1,0 +1,200 @@
+Mandiant
+Written by: Chester Sng, Pete Boonyakarn, Logeswaran Nadarajan, Lukasz Lamparski
+Introduction
+In early 2026, Mandiant identified a threat actor targeting SD-WAN infrastructure at a service provider. After gaining initial access, the threat actor exploited a zero-day vulnerability (CVE-2026-20245) in Cisco Catalyst SD-WAN to escalate privileges from a compromised administrative account to root-level access.
+The vulnerability stems from the device’s file upload feature lacking the ability to properly filter malicious data.
+Throughout the intrusion, to maintain operational security and avoid detection, the threat actor consistently employed anti-forensic techniques, selectively deleting and restoring system configuration files that were modified during their activities.
+Key Observations
+-
+Rogue Peering and Credential Manipulation: In March 2026, a threat actor established initial access via unauthorized peering connections to facilitate Secure Shell (SSH) access. The threat actor used that access to manipulate default account passwords to evade detection.
+-
+Exploitation of CVE-2026-20245: Subsequently, the attacker leveraged a zero-day privilege escalation vulnerability (now tracked as CVE-2026-20245) in Cisco Catalyst SD-WAN Manager to gain root-level access via a malicious CSV upload.
+-
+Extensive Anti-Forensic Cleanup: The threat actor deleted malicious files, reverted configuration changes, and executed a validation script to ensure indicators are purged.
+What is SD-WAN?
+Traditional Wide Area Networks (WANs) rely heavily on physical, proprietary hardware routers to direct traffic. This model is often rigid, complex to scale, and struggles to handle the demands of modern cloud computing.
+Software-Defined Wide Area Network (SD-WAN) solves this by decoupling the network’s management and control logic from the underlying physical hardware. Instead of configuring individual routers one by one, a centralized software controller is used to orchestrate the entire network from a single dashboard. SD-WANs are typically used by highly distributed organizations, such as banks, retail corporations, technology services, and healthcare providers, to securely connect multiple remote branch locations directly to central cloud services.
+What is Peering?
+Within an SD-WAN fabric, peering is the logical process of establishing a trusted, authenticated relationship between distinct network components, such as edge routers, regional hubs, and central controllers.
+Before any data can be securely transmitted across the network fabric, these devices must perform a digital handshake. During the peering phase, devices mutually authenticate each other using cryptographic certificates. Once identity and trust are verified, they exchange underlying routing tables and automatically build secure tunnels to facilitate safe data transport.
+Additional Vulnerabilities in Cisco Catalyst SD-WAN Controllers
+CVE-2026-20127 and CVE-2026-20182 are critical vulnerabilities recently disclosed by Cisco that affect the peering authentication mechanism for Cisco Catalyst SD-WAN controllers. Both vulnerabilities could allow an unauthenticated, remote attacker to bypass authentication and obtain administrative privileges.
+Intrusion Campaign Overview
+Initial Access Via Rogue Peering Connections
+From late 2025 to January 2026, Mandiant observed multiple unauthorized peering connections to the victim’s SD-WAN Manager devices. It is possible that these connections occurred due to the exploitation of CVE-2026-20127 or CVE-2026-20182 as the vulnerabilities were not disclosed, and patches were not available during this period.
+Beginning in March 2026, further unauthorized peering connections were seen on a device running a software version unaffected by CVE-2026-20127. However, Cisco confirmed that these connections did not leverage CVE-2026-20182 either, and could instead be using stolen certificate material from a previous compromise of the same device.
+It is unclear if the same threat actor was responsible for the late 2025 to January 2026 and March 2026 rogue peering activity.
+Successful Authentications By Altering The Admin Account Password
+In March 2026, the threat actor established new rogue peer connections and successfully authenticated to the SD-WAN Manager device via SSH using the vmanage-admin
+account on the same victim devices.
+Once authenticated via SSH, the threat actor executed commands to change the password of the default admin
+account. The threat actor authenticated directly to the SD-WAN Manager web application interface using the admin
+account and exfiltrated configurations of the SD-WAN fabric.
+[2026-03-07T01:31:48.464Z]"POST /j_security_check HTTP/1.1" 200 - 31 0 1288 - "<Threat Actor Control Plane IP>" "Mozilla/5.0" "<Log ID>" "<SD-WAN Manager IP>:8443" "127.0.0.1:8080"
+[2026-03-07T01:31:49.017Z] "GET /dataservice/system/device/vedges HTTP/1.1" 200 - 0 10114 127 - "<Threat Actor Control Plane IP>" "Mozilla/5.0" "<Log ID>" "<SD-WAN Manager IP>:8443" "127.0.0.1:8080"
+[2026-03-07T01:31:50.017Z] "GET /dataservice/system/device/controllers HTTP/1.1" 200 - 0 15815 100 - "<Threat Actor Control Plane IP>" "Mozilla/5.0" "<Log ID>" "<SD-WAN Manager IP>:8443" "127.0.0.1:8080"
+[2026-03-07T01:31:51.925Z] "GET /dataservice/template/config/attached/<Device ID> HTTP/1.1" 200 - 0 3732 18 - "<Threat Actor Control Plane IP>" "Mozilla/5.0" "<Log ID>" "<SD-WAN Manager IP>:8443" "127.0.0.1:8080"
+[2026-03-07T01:31:52.493Z] "GET /dataservice/template/config/running/<Device ID> HTTP/1.1" 400 - 0 134 19 - "<Threat Actor Control Plane IP>" "Mozilla/5.0" "<Log ID>" "<SD-WAN Manager IP>:8443" "127.0.0.1:8080"
+<...>
+Figure 1: Threat actor authentication and configuration extraction
+The threat actor subsequently used their active vmanage-admin
+session to change the password of the admin
+account back to its original state before terminating their active session. This activity was likely performed to reduce the probability of detection by an administrator trying to log into the device during day-to-day operations.
+The vmanage-admin
+and admin
+accounts are default accounts on Cisco Catalyst SD-WAN controllers that have different privileges, but neither possesses root shell access.
+Exploitation of CVE-2026-20245 to Escalate Privileges
+Mandiant observed that in April 2026, after establishing an SSH session with the admin
+account, the threat actor exploited CVE-2026-20245 by executing the following command to upload a file named evil_tenant.csv
+:
+request tenant-upload tenant-list /home/admin/evil_tenant.csv vpn 0
+Figure 2: Malicious file upload
+CVE-2026-20245, a vulnerability reported to Cisco by Mandiant, exists in the command-line interface (CLI) of Cisco Catalyst SD-WAN Controllers that could allow an authenticated, local attacker to execute arbitrary commands as root by supplying a crafted file to the affected system.
+The evil_tenant.csv
+file contains the exploit payload. The following code block (Figure 3) shows a snippet of the exploit which attempts to append malicious entries to the system's /etc/passwd
+and /etc/shadow
+files.
+if [ -e /usr/share/viptela/vbond_vsmart_tenant_list ] && grep -q '<redacted>' /usr/share/viptela/vbond_vsmart_tenant_list 2>/dev/null; then
+echo absent > /home/admin/.orig_vbond_vsmart_tenant_list.state;
+elif [ -e /usr/share/viptela/vbond_vsmart_tenant_list ]; then
+echo present > /home/admin/.orig_vbond_vsmart_tenant_list.state;
+cp -a /usr/share/viptela/vbond_vsmart_tenant_list /home/admin/.orig_vbond_vsmart_tenant_list;
+else
+echo absent > /home/admin/.orig_vbond_vsmart_tenant_list.state;
+fi;
+cp -a /etc/passwd /home/admin/.orig_passwd;
+cp -a /etc/shadow /home/admin/.orig_shadow;
+grep -q '^troot:' /etc/passwd || echo 'troot:x:0:0:root:/root:/bin/bash' >> /etc/passwd;
+grep -q '^troot:' /etc/shadow || echo 'troot:<redacted>:19000:0:99999:7:::' >> /etc/shadow
+Figure 3: Appending malicious entries
+Through this command, the threat actor achieved the following:
+-
+Backed up the original
+vbond_vsmart_tenant_list
+configuration file, which would have been overwritten by the contents ofevil_tenant.csv
+during the exploit. This backup was likely created to allow the actor to restore the file later, ensuring the SD-WAN Manager device did not load an invalid configuration that might alert administrators. -
+Created backups of the original
+/etc/passwd
+and/etc/shadow
+files. -
+Created a user account named
+troot
+with full root privileges.
+Mandiant subsequently observed the threat actor accessing this new troot
+account from the admin
+account via the su
+(substitute user) command.
+Anti-Forensic Techniques
+Mandiant identified that the threat actor deleted all files they created, including evil_tenant.csv
+, and restored any system configurations they modified. These deletion and modifications were done to minimize their forensic footprint.
+In addition to this, Mandiant also observed execution of a validation script, which checks if indicators of the threat actor's activities are removed.
+for f in /home/admin/evil_tenant.csv /home/admin/.orig_vbond_vsmart_tenant_list /home/admin/.orig_vbond_vsmart_tenant_list.state /home/admin/.orig_passwd /home/admin/.orig_shadow;
+do if [ -e "$f" ];
+then echo PRESENT:$f; ls -ld "$f";
+else echo ABSENT:$f;
+fi;
+done;
+if grep -q '^troot:' /etc/passwd;
+then echo PRESENT:/etc/passwd:troot;
+else echo ABSENT:/etc/passwd:troot;
+fi;
+if [ -e /usr/share/viptela/vbond_vsmart_tenant_list ];
+then echo PRESENT:/usr/share/viptela/vbond_vsmart_tenant_list; ls -ld /usr/share/viptela/vbond_vsmart_tenant_list;
+else echo ABSENT:/usr/share/viptela/vbond_vsmart_tenant_list;
+fi
+Figure 4: Validation script
+This script checks for the presence of the following:
+-
+Threat actor-created files in
+/home/admin.
+-
+troot
+account in thepasswd
+andshadow
+files. -
+vbond_vsmart_tenant_list
+, and if it exists, inspect information about the file. This is likely to check if the original file was restored.
+Outlook and Implications
+This campaign underscores the living off the edge paradigm, where threat actors prioritize the compromise of network appliances to bypass traditional security perimeters. As organizations increasingly adopt software-defined networking, the orchestrators managing these environments become primary targets. These devices offer a black box environment for threat actors: they often lack the telemetry required for deep forensic analysis, and their role as a central control plane provides a stealthy platform for persistent, wide-scale access to internal enterprise traffic. For state-sponsored actors, the ability to exploit zero-day vulnerabilities in these platforms remains a premier vector for long-term strategic intelligence collection. Google Threat Intelligence Group (GTIG) has closely tracked and reported on increased zero-day exploitation of edge devices over the past several years.
+Remediation and Hardening
+-
+Perform IOC Sweep / Threat Hunting: Collect logs and diagnostic data from SD-WAN devices by executing
+request admin-tech
+command on all control-plane components. Scan these collections for known IOCs and execute threat hunts focused on the TTPs identified in the Detections and Hunting section of this blog post. If true positive hits are observed, perform a full investigation. -
+Manual Remediation Support: As per Cisco’s guidance, any confirmed indicators of compromise or suspicious activity should be forwarded to Cisco Technical Assistance Center (TAC) for comprehensive review and remediation assistance.
+-
+Prioritize Immediate Patching and Upgrades: Organizations must prioritize upgrading Cisco Catalyst SD-WAN Manager to fixed software releases, specifically versions 20.9.9.2, 20.12.7.2, 20.15.4.5, 20.15.5.3, 20.18.3.1, 26.1.1.2, or later, to remediate CVE-2026-20245.
+-
+Implement Cisco Catalyst SD-WAN Hardening and Logging Guidelines: Organizations should follow the comprehensive security best practices and configuration standards detailed in the Cisco Catalyst SD-WAN Hardening Guide. This guide provides a robust defense-in-depth framework for securing all SD-WAN components including the management, control, and data planes against unauthorized access.
+Indicators of Compromise (IOCs)
+To assist the wider community in hunting and identifying activity outlined in this blog post, we have included indicators of compromise (IOCs) in a free GTI Collection for registered users.
+Network Indicators
+File Indicators
+Due to the threat actor's extensive anti-forensic cleanup, several files associated with this intrusion were overwritten or deleted. However, forensic remnants of the malicious CSV payload were recovered.
+Detections and Hunting
+Mandiant encourages organizations to conduct proactive threat hunts focused on the tactics, techniques, and procedures (TTPs) outlined in this report to identify activity that may otherwise blend into routine operations. Because certain indicators of compromises may mirror legitimate administrative actions, it is critical to assess these observations against the established network posture to minimize false positives.
+As per Cisco’s guidance, any suspicious activity or confirmed IOCs should be forwarded to the Cisco TAC for comprehensive review and assistance.
+Unauthorized SSH Connections as vmanage-admin
+Monitor authentication logs (/var/log/auth.log
+) for logins originating from unexpected external IP addresses using the vmanage-admin user account.
+Jan 01 07:58:00 vManage sshd[20766]: Accepted publickey for vmanage-admin from <Threat Actor IP> port 48373 ssh2: RSA SHA256:<redacted>
+Jan 01 08:01:00 vManage sshd[25178]: Accepted keyboard-interactive/pam for admin from <Threat Actor IP> port 60552 ssh2
+Figure 5: SSH from unexpected origins
+Suspicious Password Change Events
+Audit password changes in /var/log/auth.log
+targeting the admin account in quick succession, particularly where credentials are set and subsequently reverted.
+Jan 01 08:00:00 vManage usermod[12345]: change user 'admin' password
+Jan 01 08:15:00 vManage usermod[12345]: change user 'admin' password
+Figure 6: Password changes
+Defenders should also inspect rollback files present within /var/confd/rollback/
+for configuration delta commits targeting user passwords:
+# Created by: vmanage-admin
+# Date: 2026-01-01 08:00:00
+# Via: netconf
+# Type: delta
+# Label:
+# Comment:
+# No: 10000
+# TransactionId: 12345678
+# Hostname: vManage
+system {
+aaa {
+user admin {
+password <redacted>;
+}
+}
+}
+Figure 7: Rollback files
+Suspicious Execution of the su
+Command
+Audit terminal command history and system logs (/var/log/auth.log
+) for successful switch user (su
+) executions from the admin account to unauthorized accounts (e.g., troot
+).
+Jan 01 08:03:00 vManage su[24289]: Successful su for troot by admin
+Figure 8: su
+logins
+Exploitation of CVE-2026-20245
+Monitor script logs (/var/log/scripts.log
+) for execution anomalies involving unauthorized execution of vconfd_script_upload_tenant_list.sh
+.
+Jan 01 08:01:05 vManage vScript: Tenant list upload per vsmart serial number: /usr/bin/vconfd_script_upload_tenant_list.sh -cli path /home/admin/evil_tenant.csv vpn 0
+Jan 01 08:01:05 vManage vScript: uploading tenant list via VPN 0 true
+Jan 01 08:01:05 vManage vScript: Copying ... /home/admin/evil_tenant.csv via VPN 0
+Jan 01 08:01:05 vManage vScript: Successfully loaded the tenant placement file
+Figure 9: Execution anomalies
+Defenders can also query active command execution history using show history within the Viptela CLI for the specific administrative upload commands:
+01-01 08:01:05 -- request tenant-upload tenant-list /home/admin/evil_tenant.csv vpn 0
+Figure 10: Command execution
+Google Security Operations (SecOps)
+Google SecOps customers have access to these broad category rules and more under the Mandiant Intel Emerging Threats rule pack. The activity discussed in the blog post is detected in Google SecOps under the rule names:
+-
+Privileged Account Append to Passwd Database
+-
+Grep Privileged User Account Discovery in Passwd or Shadow
+-
+Hidden Backup of Sensitive System Files
+-
+Suspicious Copy from Usr Share to User Hidden Directory
+Acknowledgements
+Mandiant would like to thank the Cisco Product Security Incident Response Team (PSIRT) for their collaboration and partnership throughout the coordinated disclosure process.

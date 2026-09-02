@@ -1,0 +1,61 @@
+Mandiant
+Written by: Shebin Mathew
+Introduction
+The "Golden SAML" technique, first described by CyberArk researchers in 2017, and further detailed by Mandiant researchers in 2021, remains one of the most effective methods for threat actors to forge identity assertions in the Microsoft ecosystem. By obtaining the private key of an ADFS token-signing certificate, an attacker can authenticate as any user to any SAML-federated application, bypassing multifactor authentication (MFA), conditional access, and all identity-based controls.
+However, during a recent red team engagement, Mandiant discovered that when ADFS certificates are manually rotated, configuration drift can silently leave active signing keys exposed in Machine DPAPI. Specifically, Mandiant discovered that in environments where AutoCertificateRollover is disabled and certificates are manually rotated, the database often becomes a 'ghost'—a record that still exists, still decrypts successfully, but references a certificate no longer used for token signing by the ADFS service. This attack vector warrants attention because the underlying configuration is commonly deployed in enterprise environments. The technique avoids direct interaction with components such as LSASS and the live ADFS service process, which are often subject to enhanced monitoring in enterprise environments, and may therefore result in lower visibility depending on the organization’s telemetry coverage. This post details how adversaries may exploit this TTP to forge high-privilege SAML tokens and provides the blueprint to defend against it.
+Technical Insight: Encountering the ‘Ghost Certificate’
+Analysts followed the standard DKM extraction path, retrieving the encrypted blob from the WID database and decrypting it using the DKM material stored in Active Directory. The extraction succeeded, but the recovered certificate was no longer valid for token signing, and Entra ID rejected the resulting tokens with AADSTS500172
+due to invalid signing material. Although structurally correct, the artifact is not usable for authentication, as the active signing key resides in the system’s machine-scoped cryptographic store, protected by Windows Machine DPAPI and managed through the operating system’s cryptographic subsystem. Successfully obtaining this active key allows an attacker to forge valid SAML assertions for any user, bypassing the need for user credentials and multi-factor authentication, and granting unauthorized access to any SAML-federated application including Microsoft 365 and Entra ID within the organization's environment.
+Analysis revealed that AutoCertificateRollover
+had been disabled and a manual rotation had been performed. Confirmation was obtained directly via Get-AdfsProperties
+, which returned AutoCertificateRollover: False
+, indicating that certificate lifecycle management had been delegated to manual administrative processes. While the ADFS service used a new valid key for signing, the WID configuration database was never updated to reflect the new certificate—leaving an expired "ghost" entry as the only record. This drift condition surfaces via Microsoft Event ID 385, which indicates certificate validity warnings in the ADFS service. Notably, this event self-resolves when AutoCertificateRollover
+is re-enabled and a subsequent certificate rollover is performed; in environments where it is disabled and manual rotation is performed without a corresponding database update, it is the observable symptom of this drift condition.
+Figure 1: ADFS certificate enumeration output showing configuration drift between the WID database and the active host certificate
+ADFS maintains private keys in two protection contexts. In Location 1 (User DPAPI), encrypted key blobs may exist on disk, but the DPAPI protection is tied to the service account's SID and associated DPAPI masterkey material. In the assessed environment, the domain DPAPI backup key approach successfully decrypted masterkey material for interactive user profiles, but returned no decryptable material associated with the ADFS service account profile. All subsequent offline decryption attempts similarly failed, consistent with the masterkey not being recoverable through the evaluated on-disk recovery approach in this environment—though this observation is bounded to the assessed environment and does not represent a universal architectural property of all ADFS deployments.
+Location 2 (Machine RSA) does not rely on a user-specific logon session. Instead, the key material is protected using Machine DPAPI, leveraging the DPAPI_SYSTEM
+LSA secret together with machine masterkeys available to sufficiently privileged SYSTEM-level contexts.
+Why the WID Path Misses This Key
+In ADFS environments experiencing configuration drift—commonly arising during manual certificate rotations where AutoCertificateRollover
+is disabled—the ADFS service host can successfully bind to a newly provisioned signing certificate at the operating-system level, ensuring continued service operation. However, the WID configuration database may not reflect the current signing certificate, resulting in stale certificate metadata.
+This divergence between configuration and runtime state is the condition that ADFS Event ID 385 is designed to flag. As a consequence, extraction techniques that rely solely on the WID database and DKM material may return certificates that are no longer used for active signing, leading to rejected assertions in downstream federation scenarios.
+Understanding How the Machine DPAPI Store Becomes Populated
+Understanding how the Machine DPAPI store becomes populated requires examining how ADFS persists its token-signing key material. During initial deployment, automatic certificate rollover, or manual certificate rotation, ADFS persists its RSA private key material in the machine-scoped CAPI key store at C:\ProgramData\Microsoft\Crypto\RSA\MachineKeys\
+, protected using machine DPAPI context rather than a user-bound DPAPI context. SharpDPAPI /machine
+enumeration in the assessed environment confirmed that the active machine key material resided under this path, while the CNG Crypto\Keys
+store was not observed in use in the assessed environment.
+The protection chain relies on the DPAPI_SYSTEM
+LSA secret together with machine masterkeys associated with the S-1-5-18 security context, stored in C:\Windows\System32\Microsoft\Protect\S-1-5-18\
+as DPAPI-protected key material—both components ultimately resolvable only within highly privileged SYSTEM-level contexts on the host. The corresponding certificate is enrolled into the LocalMachine\My
+certificate store, from which ADFS retrieves the associated private key during token-signing operations.
+The architectural rationale for machine-scoped key storage is operational resilience. A machine-scoped key remains usable across service account password changes, gMSA rotations, system reboots, and service restarts without requiring key reprovisioning or dependency on a specific interactive logon session. This design ensures that the ADFS service can consistently access the signing key regardless of changes to the underlying service account credentials.
+However, this same design choice has important security implications. Because the private key is protected using Machine DPAPI rather than a user-bound DPAPI context, a sufficiently privileged local process capable of accessing the machine key store and associated DPAPI artifacts may be able to recover the key material independently of the original service logon session. As a result, under certain conditions, recovery of the active ADFS token-signing private key may be achievable without direct interaction with LSASS memory or the live ADFS service process itself, potentially reducing visibility to defenses primarily focused on credential dumping or process-memory access behaviors.
+Attack Flow: Machine DPAPI Key Recovery to SAML Forgery
+Figure 2: Machine DPAPI extraction flow—five-step process from SYSTEM execution to SAML assertion
+Figure 3: ‘SharpDPAPI /machine’ output confirming successful recovery of the active ADFS token-signing private key from the machine DPAPI store
+The recovered key was used to forge a SAML assertion impersonating a Global Administrator identity, which Entra ID accepted as a valid authentication assertion, resulting in authenticated access at Global Administrator privilege level within the federated Microsoft 365 tenant.
+Detection and Hunting
+Defenders should prioritize visibility into operating system-level cryptographic operations and identity issuance behavior, rather than relying solely on application-layer configuration stores.
+-
+SACL-Based Object Access Monitoring: Configure object access auditing via SACLs on
+C:\ProgramData\Microsoft\Crypto\RSA\MachineKeys\
+andC:\Windows\System32\Microsoft\Protect\S-1-5-18\
+. When configured correctly, this generates Security Event ID 4663 for file access attempts. Coverage depends on SACL configuration and access paths; treat this as supporting evidence in correlation-based detection rather than a stand-alone signal. -
+ADFS Token Issuance Consistency: Monitor for inconsistencies between primary authentication events and token issuance events in ADFS audit logs. Relevant events include token issuance and claims processing records (Event IDs 299, 1200-series, depending on ADFS version and audit configuration). The objective is to identify token issuance that cannot be clearly correlated to a preceding authentication context. This is most effective when normal authentication patterns per relying party trust are baselined.
+-
+Federated Identity Monitoring in Entra ID: Entra ID sign-in logs will record an accepted forged assertion as a standard federated sign-in event. Detection requires cross-correlating Entra ID sign-in records against ADFS-side issuance logs—neither source in isolation is sufficient. For privileged accounts, focus on unexpected Internet Protocol (IP) ranges, claim set deviations,and user-agent inconsistencies.
+Mitigation and Remediation
+ADFS infrastructure should be treated as Tier 0 identity infrastructure, equivalent in criticality to Domain Controllers. If SYSTEM access is achieved on an ADFS host, the signing key must be considered compromised.
+-
+Hardware-Backed Key Protection: Migrate token-signing certificates to a Hardware Security Module (HSM). HSM-backed keys ensure private key material does not exist in software-accessible storage on the host, eliminating the Machine DPAPI extraction path entirely.
+-
+gMSA Service Identity: Run ADFS services using Group Managed Service Accounts to automate credential rotation and reduce operational drift in service identity management. While this does not directly address machine-scoped key protection, it eliminates manual credential management as a contributing factor to configuration drift.
+-
+Tier 0 Administrative Controls: Govern ADFS servers with strict Tier 0 controls: restricted administrative access pathways, dedicated Privileged Access Workstations (PAWs), separation from general server administration domains, and enhanced privileged access monitoring.
+-
+Certificate Rotation and Configuration Validation: If compromise is suspected, rotate the token-signing certificate and validate consistency across ADFS configuration, the
+LocalMachine\My
+store, and federation metadata. Do not rely on a single source of truth. For environments with AutoCertificateRollover disabled, manual rotation must include updating ADFS viaSet-AdfsCertificate
+—installing the certificate alone is insufficient. Validate usingGet-AdfsCertificate
+after rotation. If Event ID 385 appears afterward, investigate for configuration inconsistency. -
+Multicloud Scope Awareness: A compromised ADFS token-signing key affects all SAML relying party trusts, not just Microsoft services. Organizations using ADFS for identity federation across other software-as-a-service (SaaS) platforms should treat ADFS as Tier 0 infrastructure and audit all relying party trusts. Migrating away from ADFS-based federation (e.g., to native OIDC federation) removes this specific attack path.

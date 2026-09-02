@@ -1,0 +1,63 @@
+On May 6, 2026, Palo Alto Networks released a security advisory for CVE-2026-0300, identifying a buffer overflow vulnerability in the User-ID™ Authentication Portal (aka Captive Portal) service of Palo Alto Networks PAN-OS software. Vulnerable systems allow an unauthenticated attacker to execute arbitrary code with root privileges on the PA-Series and VM-Series firewalls by sending specially crafted packets.
+We are aware of only limited exploitation of CVE-2026-0300 at this time. Unit 42 is tracking CL-STA-1132, a cluster of likely state-sponsored threat activity exploiting CVE-2026-0300. The attacker behind this activity exploited CVE-2026-0300 to achieve unauthenticated remote code execution (RCE) in PAN-OS software. Upon successful exploitation, the attacker was able to inject shellcode into an nginx worker process.
+Post-exploitation activity includes deployment of publicly available tunneling tools (EarthWorm, ReverseSocks5), Active Directory enumeration using credentials likely obtained from the firewall, and the systematic destruction of logs and other evidence of compromise.
+Palo Alto Networks Cortex Xpanse can identify exposed instances of the User-ID Authentication Portal potentially vulnerable to CVE-2026-0300.
+Palo Alto Networks customers receive protections from and mitigations in the following products:
+- Advanced WildFire
+- Next-Generation Firewall with Advanced Threat Prevention
+- Advanced URL Filtering and Advanced DNS Security
+- Cortex AgentiX
+- Cortex Xpanse
+The Unit 42 Incident Response team can also be engaged to help with a compromise or to provide a proactive assessment to lower your risk.
+| Vulnerabilities Discussed | CVE-2026-0300 |
+A buffer overflow vulnerability in the User-ID Authentication Portal (aka Captive Portal) service of Palo Alto Networks PAN-OS software allows an unauthenticated attacker to execute arbitrary code with root privileges on the PA-Series and VM-Series firewalls by sending specially crafted packets through network traffic.
+While Prisma Access, Cloud NGFW and Panorama appliances remain unaffected by this vulnerability, the risk of unauthenticated RCE exploitation is significantly elevated when the User-ID Authentication Portal is exposed to the public internet or untrusted networks. Adhering to best practice guidelines by restricting User-ID Authentication Portal access exclusively to trusted internal IP addresses and ensuring the portal is not publicly reachable will greatly mitigate this risk.
+We are aware of only limited exploitation of CVE-2026-0300 at this time. Starting April 9, 2026, there were unsuccessful exploitation attempts against a PAN-OS device. A week later, the attackers successfully achieved RCE against the device and injected shellcode. Following the compromise, the attackers immediately conducted log cleanup to mitigate detection by clearing crash kernel messages, deleting nginx crash entries and nginx crash records, as well as removing crash core dump files.
+The attackers deployed a number of tools with root privileges four days later, before conducting Active Directory (AD) enumeration using the firewall’s service account credentials to target domain root and DomainDnsZones. Following enumeration, the attackers deleted ptrace injection evidence from the audit log and deleted the SetUserID (SUID) privilege escalation binary.
+On April 29, 2026, the attackers conducted a Security Assertion Markup Language (SAML) flood against the previously targeted device, which promoted a second device to Active, inheriting the same internet-facing traffic. RCE was then achieved on the second device, where EarthWorm and ReverseSocks5 were downloaded.
+Earthworm is an open-source network tunneling tool written in C that operates on Windows, Linux, macOS and ARM/MIPS-based platforms. It functions as a SOCKS v5 server and port transfer utility designed to establish covert communication channels across restricted network boundaries. Earthworm capabilities include:
+- Initiates a forward SOCKS5 server to proxy incoming connections (MITRE ATT&CK technique T1090).
+- Establishes reverse SOCKS5 tunnels from internal hosts to external attacker-controlled bridges (T1090).
+- Bridges data between two separate listening ports to facilitate pivot management (T1090).
+- Forwards traffic from a local port to a remote destination host and port (T1090).
+- Chains multiple transfer modes to create multi-hop cascaded network tunnels (T1572).
+- Encapsulates traffic for protocols like RDP and SSH within SOCKS tunnels (T1572).
+EarthWorm has reportedly been used by the threat actor behind CL-STA-0046, Volt Typhoon, UAT-8337 and APT41.
+ReverseSocks5 is an open-source networking tool used to bypass firewalls or NAT by establishing an outbound connection from a target machine to a controller, rather than the other way around.
+Once the connection is established, it creates a SOCKS5 proxy tunnel that allows the controller to route traffic into the target's internal network. Because the source code is publicly available, it is frequently utilized by system administrators for remote management, and also by threat actors for pivoting during a breach.
+Customers can mitigate the risk of this issue by taking either of the following actions:
+- Restrict User-ID Authentication Portal access to only trusted zones and in addition, disable Response Pages in the Interface Management Profile attached to every L3 interface in any zone where untrusted/internet traffic can ingress. Keep Response Pages enabled only on interfaces in trust/internal zones where legitimate users' browsers ingress. Refer to Step 6 of the linked Live Community article and Knowledgebase article for steps to restrict access.
+- Disable User-ID Authentication Portal if not required.
+Customers with an Advanced Threat Prevention subscription can block attacks for this vulnerability by enabling Threat ID 510019 from Applications and Threats content version 9097-10022. Decoder capabilities necessitate PAN-OS 11.1 or a later version for Threat ID support.
+Palo Alto Networks recommends following guidance in the security advisory.
+Over the last five years, nation-state threat actors engaged in cyber espionage have increasingly focused their efforts on edge-network technological assets, including firewalls, routers, IoT devices, hypervisors and various VPN solutions, which provide high-privilege access while often lacking the robust logging and security agents found on standard endpoints.
+The reliance of the attackers behind CL-STA-1132 on open-source tooling, rather than proprietary malware, minimized signature-based detection and facilitated seamless environment integration. This technical choice, combined with a disciplined operational cadence of intermittent interactive sessions over a multi-week period, intentionally remained below the behavioral thresholds of most automated alerting systems. The lateral movement technique prioritized identity trust abuse over traditional network-layer pivoting, effectively reducing the attacker's footprint. Consequently, this campaign demonstrates that operational restraint—specifically the use of non-persistent access windows—is a primary factor in maintaining long-term residency on edge infrastructure.
+Palo Alto Networks has shared our findings with our fellow Cyber Threat Alliance (CTA) members. CTA members use this intelligence to rapidly deploy protections to their customers and to systematically disrupt malicious cyber actors. Learn more about the Cyber Threat Alliance.
+Palo Alto Networks customers are better protected by our products, as listed below. We will update this threat brief as more relevant information becomes available.
+Palo Alto Networks Product Protections for Exploitation of PAN-OS Captive Portal Zero-Day for Unauthenticated Remote Code Execution
+- North America: Toll Free: +1 (866) 486-4842 (866.4.UNIT42)
+- UK: +44.20.3743.3660
+- Europe and Middle East: +31.20.299.3130
+- Asia: +65.6983.8730
+- Japan: +81.50.1790.0200
+- Australia: +61.2.4062.7950
+- India: 000 800 050 45107
+- South Korea: +82.080.467.8774
+The Advanced WildFire machine-learning models and analysis techniques have been reviewed and updated in light of indicators associated with this activity.
+Next-Generation Firewall with the Advanced Threat Prevention security subscription can help block attacks for this vulnerability by enabling Threat ID 510019 from Applications and Threats content version 9098. Decoder capabilities necessitate PAN-OS 11.1 or a later version for Threat ID support.
+Advanced URL Filtering and Advanced DNS Security identify known URLs and domains associated with this activity as malicious.
+Cortex AgentiX
+Security analysts can use natural language to prompt the Cortex AgentiX Threat Intel agent for a quick summary of sightings in their Cortex environment, to retrieve tenant-specific and global threat intelligence information for CVE-2026-0300.
+Palo Alto Networks Cortex Xpanse can identify exposed instances of the User-ID Authentication Portal potentially vulnerable to CVE-2026-0300.
+- 67.206.213[.]86
+- 136.0.8[.]48
+- 146.70.100[.]69 (C2 Staging)
+- 149.104.66[.]84
+- hxxp[:]//146.70.100[.]69:8000/php_sess (EarthWorm Download)
+- hxxps[:]//github[.]com/Acebond/ReverseSocks5/releases/download/v2.2.0/ReverseSocks5-v2.2.0-linux-amd64.tar[.]gz (ReverseSocks5 Download)
+- e11f69b49b6f2e829454371c31ebf86893f82a042dae3f2faf63dcd84f97a584 (EarthWorm)
+- Safari/532.31 Mozilla/5.5 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0 (Attacker User Agent String)
+- /var/tmp/linuxap, /var/tmp/linuxda, /var/tmp/linuxupdate (Tunneling Tools)
+- /tmp/.c (Unidentified Python Script)
+- /tmp/R5, /var/R5 (ReverseSocks5)
+Updated May 8, 2026, at 9:20 a.m. PT, to update the product protections section, adding Cortex AgentiX and updating the Applications and Threats content version.

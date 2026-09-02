@@ -1,0 +1,287 @@
+Phishing targeting Polish SMBs continues via ModiLoader
+Award-winning news, views, and insight from the ESET security community
+English
+Español
+Deutsch
+Português
+Français
+TIPS & ADVICE
+BUSINESS SECURITY
+ESET RESEARCH
+About ESET Research
+Blogposts
+Podcasts
+White papers
+Threat reports
+WeLiveScience
+FEATURED
+Ukraine crisis – Digital security resource center
+WeLiveProgress
+COVID-19
+Resources
+Videos
+TOPICS
+Digital Security
+Scams
+How to
+Privacy
+Cybercrime
+Kids online
+Social media
+Internet of Things
+Malware
+Ransomware
+Secure coding
+Mobile security
+Critical infrastructure
+Threat research
+ABOUT US
+About WeLiveSecurity
+Our Experts
+Contact Us
+English
+Español
+Deutsch
+Português
+Français
+Award-winning news, views, and insight from the ESET security community
+ESET Research
+Phishing targeting Polish SMBs continues via ModiLoader
+ESET researchers detected multiple, widespread phishing campaigns targeting SMBs in Poland during May 2024, distributing various malware families
+Jakub Kaloč
+30 Jul 2024
+•
+,
+8 min. read
+Just a few months back, ESET Research published a
+blogpost
+about massive phishing campaigns across Central and Eastern Europe carried out during the second half of 2023. In those campaigns Rescoms malware (also known as Remcos), protected by AceCryptor, was delivered to potential victims with the goals of credential theft and potential gain of initial access to company networks.
+Phishing campaigns targeting the region didn’t stop in 2024. In this blogpost we present what recent phishing campaigns looked like and how the choice of delivery mechanism shifted away from AceCryptor to ModiLoader.
+Key points of this blogpost:
+ESET detected nine notable ModiLoader phishing campaigns during May 2024 in Poland, Romania, and Italy.
+These campaigns targeted small and medium-sized businesses.
+Seven of the campaigns targeted Poland, where ESET products protected over 21,000 users.
+Attackers deployed three malware families via ModiLoader: Rescoms, Agent Tesla, and Formbook.
+Attackers used previously compromised email accounts and company servers, not only to spread malicious emails but also to host malware and collect stolen data.
+Overview
+Even though the phishing campaigns have been ongoing throughout the first half of 2024, this blogpost focuses just on May 2024, as this was an eventful month. During this period, ESET products protected over 26,000 users, over 21,000 (80%) of whom were in Poland. In addition to Poland, where over 80% of potential victims were located, Italy and Romania were also targeted by the phishing campaigns. In total we registered nine phishing campaigns, seven of which targeted Poland throughout May, as can be seen in Figure 1.
+Figure 1. Hits of ModiLoader phishing campaigns in Poland during May 2024
+In comparison with the campaigns that took place during the end of 2023, we see a shift away from using AceCryptor as a tool of choice to protect and successfully deliver the malware. Instead, in all nine campaigns, attackers used ModiLoader (aka DBatLoader) as the preferred delivery tool of choice. The final payload to be delivered and launched on the compromised machines varied; we’ve detected campaigns delivering:
+Formbook – information stealing malware discovered in 2016,
+Agent Tesla – a remote access trojan and information stealer, and
+Rescoms RAT – remote control and surveillance software, able to steal sensitive information.
+Campaigns
+In general, all campaigns followed a similar scenario. The targeted company received an email message with a business offer that could be as simple as “
+Please provide your best price offer for the attached order no. 2405073
+”, as can be seen in Figure 2.
+Figure 2. Example of a phishing email containing ModiLoader in the attachment
+In other campaigns, email messages were more verbose, such as the phishing email in Figure 3, which can be translated as follows:
+Hi,
+We are looking to purchase your product for our client.
+Please find the attached inquiry for the first step of this purchase.
+The attached sheet contains target prices for most products. I highlighted 10 elements to focus on pricing – the rest of the items are optional to price (we will apply similar price level based on other prices).
+Please get back to me before 28/05/2024
+If you need more time, please let me know how much you will need.
+If you have any questions, please also let me know.
+Figure 3. A more verbose phishing email example containing ModiLoader in the attachment
+As in the phishing campaigns of H2 2023, attackers impersonated existing companies and their employees as the technique of choice to increase campaign success rate. In this way, even if the potential victim looked for the usual red flags (aside from potential translation mistakes), they were just not there, and the email looked as legitimate as it could have.
+Inside the attachments
+Emails from all campaigns contained a malicious attachment that the potential victim was incentivized to open, based on the text of the email. These attachments had names like
+RFQ8219000045320004.tar
+(as in Request for Quotation) or
+ZAMÓWIENIE_NR.2405073.IMG
+(translation: ORDER_NO) and the file itself was either an ISO file or archive.
+In campaigns where an ISO file was sent as an attachment, the content was the ModiLoader executable (named similarly or the same as the ISO file itself) that would be launched if a victim tried to open the executable.
+In the other case, when a RAR archive was sent as an attachment, the content was a heavily obfuscated batch script, with the same name as the archive and with the
+.cmd
+file extension. This file also contained a base64-encoded ModiLoader executable, disguised as a
+PEM
+-encoded certificate revocation list. The script is responsible for decoding and launching the embedded ModiLoader (Figure 4).
+Figure 4. File with
+.cmd
+extension containing heavily obfuscated batch script (top) that decodes base64-encoded ModiLoader binary (bottom)
+When ModiLoader is launched
+ModiLoader is a Delphi downloader with a simple task – to download and launch malware. In two of the campaigns, ModiLoader samples were configured to download the next-stage malware from a compromised server belonging to a Hungarian company. In the rest of the campaigns ModiLoader downloaded the next stage from Microsoft’s OneDrive cloud storage. We observed four accounts where second-stage malware was hosted. The whole chain of compromise from receiving the malicious email until launching the final payload is summarized in Figure 5.
+Figure 5. Chain of compromise of ModiLoader phishing campaigns in Poland during May 2024
+Data exfiltration
+Three different malware families were used as a final payload: Agent Tesla, Rescoms, and Formbook. All these families are capable of information stealing and thus allow attackers not only to expand their datasets of stolen information, but also to prepare the ground for their next campaigns.
+Even though the exfiltration mechanisms differ between malware families and campaigns, it is worth mentioning two examples of these mechanisms.
+In one campaign, information was exfiltrated via SMTP to an address using a domain similar to that of a German company. Note that typosquatting was a popular technique used in the Rescoms campaigns from the end of last year. These older campaigns used typosquatted domains for sending phishing emails. One of the new campaigns used a typosquatted domain for exfiltrating data. When someone tried to visit web pages of this typosquatted domain, they’d be immediately redirected to the web page of the legitimate (impersonated) company.
+In another campaign, we saw data being exfiltrated to a web server of a guest house located in Romania (a country targeted now and in the past by such campaigns). In this case, the web server seems legitimate (so no typosquatting) and we believe that the accommodation’s server had been compromised during previous campaigns and abused for malicious activities.
+Conclusion
+Phishing campaigns targeting small and medium-sized businesses in Central and Eastern Europe are still going strong in the first half of 2024. Furthermore, attackers take advantage of previously successful attacks and actively use compromised accounts or machines to further spread malware or collect stolen information. In May alone, ESET detected nine ModiLoader phishing campaigns, and even more outside this time frame. Unlike the second half of 2023, when Rescoms packed by AceCryptor was the preferred malware of choice of the attackers, they didn’t hesitate to change the malware they use to be more successful. As we presented, there are multiple other malware families like ModiLoader or Agent Tesla in the arsenal of these attackers, ready to be used.
+For any inquiries about our research published on WeLiveSecurity, please contact us at
+threatintel@eset.com
+.
+ESET Research offers private APT intelligence reports and data feeds. For any inquiries about this service, visit the
+ESET Threat Intelligence
+page.
+IoCs
+A comprehensive list of indicators of compromise (IoCs) can be found in
+our GitHub repository
+.
+Files
+SHA-1
+Filename
+Detection
+Description
+E7065EF6D0CF45443DEF
+30D3A3A35FD7300C4A56
+doc023561361500.img
+Win32/TrojanDownloader.
+ModiLoader.ACM
+Malicious attachment from phishing campaign carried out in Poland during May 2024.
+31672B52259B4D514E68
+DA5D199225FCFA72352B
+doc023561361500__
+079422732__202410502__
+000023.pdf.exe
+Win32/TrojanDownloader.
+ModiLoader.ACM
+ModiLoader executable from phishing campaign carried out in Poland during May 2024.
+B71070F9ADB17C942CB6
+92566E6020ACCA93726A
+N/A
+MSIL/Spy.Agent.CVT
+Agent Tesla executable from phishing campaign carried out in Poland during May 2024.
+D7561594C7478C4FE37C
+26684005268EB582E13B
+ZAMÓWIENIE_NR.2405073.
+IMG
+Win32/TrojanDownloader.
+ModiLoader.ACR
+Malicious attachment from phishing campaign carried out in Poland during May 2024.
+47AF4CFC9B250AC4AE8C
+DD0A2D2304D7CF60AACE
+ZAMÓWIENIE_NR.2405073.
+exe
+Win32/TrojanDownloader.
+ModiLoader.ACR
+ModiLoader executable from phishing campaign carried out in Poland during May 2024.
+2963AF32AB4D497CB41F
+C85E54A9E5312D28BCDE
+N/A
+Win32/Formbook.AA
+Formbook executable from phishing campaign carried out in Poland during May 2024.
+5DAB001A2025AA91D278
+163F39E7504004354F01
+RFQ8219000045320004.
+tar
+Win32/TrojanDownloader.
+ModiLoader.ACP.Gen
+Malicious attachment from phishing campaign carried out in Poland during May 2024.
+D88B10E4FD487BFCCA6A
+711A9E33BB153674C757
+RFQ8219000045320004.
+cmd
+Win32/TrojanDownloader.
+ModiLoader.ACP.Gen
+Malicious batch script from phishing campaign carried out in Poland during May 2024.
+F0295F2E46CEBFFAF789
+2A5B33BA54122781C20B
+N/A
+Win32/TrojanDownloader.
+ModiLoader.ADB
+ModiLoader executable from phishing campaign carried out in Poland during May 2024.
+3C0A0EC8FE9EB3E5DAB2
+018E94CEB4E29FD8DD33
+N/A
+Win32/Rescoms.B
+Rescoms executable from phishing campaign carried out in Poland during May 2024.
+9B5AF677E565FFD4B15D
+EE283D46C2E60E1E31D8
+DOCUMENT_BT24PDF.IMG
+Win32/TrojanDownloader.
+ModiLoader.ADB
+Malicious attachment from phishing campaign carried out in Romania during May 2024.
+738CFBE52CFF57098818
+857930A7C1CF01DB0519
+DOCUMENT_BT24PDF.exe
+Win32/TrojanDownloader.
+ModiLoader.ADB
+ModiLoader executable from phishing campaign carried out in Romania during May 2024.
+843CE8848BCEEEF16D07
+041A97417882DBACB93F
+N/A
+Win32/Formbook.AA
+Formbook executable from phishing campaign carried out in Romania during May 2024.
+MITRE ATT&CK techniques
+This table was built using
+version 15
+of the MITRE ATT&CK framework.
+Tactic
+ID
+Name
+Description
+Reconnaissance
+T1589.002
+Gather Victim Identity Information: Email Addresses
+Email addresses and contact information (either bought or gathered from publicly available sources) were used in phishing campaigns to target companies across multiple countries.
+Resource Development
+T1586.002
+Compromise Accounts: Email Accounts
+Attackers used compromised email accounts to send malicious emails in phishing campaigns to increase their phishing email’s credibility.
+T1588.001
+Obtain Capabilities: Malware
+Attackers bought licenses and used multiple malware families for phishing campaigns.
+T1583.006
+Acquire Infrastructure: Web Services
+Attackers used Microsoft OneDrive to host malware.
+T1584.004
+Compromise Infrastructure: Server
+Attackers used previously compromised servers to host malware and store stolen information.
+Initial Access
+T1566
+Phishing
+Attackers used phishing messages with malicious attachments to compromise computers and steal information from companies in multiple European countries.
+T1566.001
+Phishing: Spearphishing Attachment
+Attackers used spearphishing messages to compromise computers and steal information from companies in multiple European countries.
+Execution
+T1204.002
+User Execution: Malicious File
+Attackers relied on users opening archives containing malware and launching a ModiLoader executable.
+Credential Access
+T1555.003
+Credentials from Password Stores: Credentials from Web Browsers
+Attackers tried to steal credential information from browsers and email clients.
+Let us keep you
+up to date
+Sign up for our newsletters
+Ukraine Crisis newsletter
+Regular weekly newsletter
+Subscribe
+Related Articles
+ESET Research
+Forgotten UEFI shims undermining Secure Boot
+ESET Research
+Forgotten UEFI shims undermining Secure Boot
+ESET Research
+Threat Reports
+ESET Threat Report H1 2026
+ESET Research
+Threat Reports
+ESET Threat Report H1 2026
+ESET Research
+Gamaredon in 2025: Leveraging tunnels, workers, dead drops, and new alliances
+ESET Research
+Gamaredon in 2025: Leveraging tunnels, workers, dead drops, and new alliances
+Table of Contents
+Similar Articles
+ESET research
+Rescoms rides waves of AceCryptor spam
+ESET research
+Shedding light on AceCryptor and its operation
+ESET research
+What’s up with Emotet?
+Share Article
+Discussion
+Award-winning news, views, and insight from the ESET security community
+About us
+ESET
+Contact us
+Privacy Policy
+Legal Information
+Manage Cookies
+RSS Feed
+Copyright © 1992 - 2026 ESET, spol. s r.o. All rights reserved.

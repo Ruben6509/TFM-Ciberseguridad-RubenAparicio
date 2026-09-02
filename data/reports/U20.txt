@@ -1,0 +1,193 @@
+We recently detected a new campaign from the XorDDoS Trojan that led us to conduct an in-depth investigation that unveiled concealed network infrastructure that carries a large amount of command and control (C2) traffic. When we compared the most recent wave of XorDDoS attacks with a campaign from 2022, we found the only difference between the campaigns was in the configuration of the C2 hosts. While the attacking domains remain unchanged, the attackers have migrated their offensive infrastructure to hosts running on legitimate public hosting services.
+Even though numerous security vendors have already classified the C2 domains as malicious and barred them, we still detect active malware traffic directed to these new underlying IPs. This underscores the necessity of extending protection beyond the mere blocking of dedicated attacking hosts.
+We provide a comprehensive analysis of the XorDDoS Trojan's attacking behaviors. Subsequently, we unveil the intricate network infrastructure orchestrating the campaign's botnet. Lastly, we introduce the advanced signatures derived from the key attacking hotspots, including hostnames, URLs and IP addresses. These signatures effectively identified over 1,000 XorDDoS C2 traffic sessions in August 2023 alone.
+Palo Alto Networks customers receive protection from the XorDDoS campaign through our Next-Generation Firewall with Cloud-Delivered Security Services, including Advanced WildFire, DNS Security and Advanced URL Filtering.
+| Related Unit 42 Topics | Linux, Trojan |
+The XorDDoS Trojan infects Linux devices and transforms them into zombies, which the perpetrators can control to execute malicious tasks remotely. Attackers then manipulate the compromised devices to carry out distributed denial of service (DDoS) attacks.
+The campaign discussed here started in earnest on July 28, 2023, and became yet more active from July 31 to Aug. 5. Following several days of dormancy, the campaign surged and delivered 30 unique malware variants on Aug. 12.
+Figure 1 presents the distribution of the campaign’s malware delivery attempts.
+Before malware successfully infiltrated a device, the attackers initiated a scanning process, employing HTTP requests to identify potential vulnerabilities in their targets. Specifically, they probed whether a prospective victim's machine hosted an HTTP service susceptible to directory traversal, a vulnerability that enables the attackers to access arbitrary files in the server.
+Several victim machines received scanning traffic intended to access the /etc/passwd file under their respective IP addresses. These actions occurred before the eventual compromise of the victim machines, followed by the initiation of C2 requests.
+Figure 2 shows the scanning requests directed at a victim device in blue, and the subsequent C2 traffic it generated in red. During the initial three days, this particular device encountered a flood of over 1,000 probing vulnerability scans every day. Following this surge, the scanning volume experienced a sharp decline, eventually vanishing. After that, the victim device generated a steady stream of C2 traffic, as shown.
+The threat actor identified vulnerable devices and obtained the usernames from the leaked file, but because the passwords in /etc/passwd are encrypted, they gained initial access through SSH brute-force attack. This type of attack involves systematically trying all possible combinations of passwords until the correct one is found. They then downloaded malware from remote servers and deployed it on the victim machines.
+As implied by its name, the XorDDoS Trojan uses an XOR encryption key (BB2FA36AAA9541F0) to encrypt all the data related to its execution. Figure 3 shows that the threat invokes a decryption function to retrieve the hard-coded strings.
+Once activated on a victim machine, the Trojan first collects essential information, including a magic string. This string is a 32 bytes long identifier that represents the compromised device while connecting with the C2 server. The stolen information includes data from /var/run/gcc.pid, the OS version, malware version, memory status and CPU information.
+The threat then calculates the cyclic redundancy check (CRC) code of the metadata and encrypts that data using an XOR key, as shown in Figure 4. The C2 server uses the CRC code to detect errors during network communication.
+Figure 5 shows the C2 traffic exfiltrating the stolen data.
+The C2 domains are embedded in the malware executable. Figure 6 illustrates how XorDDoS decrypts those domains by calling the decrypt_remotestr() function and appends them to a list. In the sample we analyzed, this list contains the following C2 endpoints:
+- ppp.gggatat456[.]com:53
+- ppp.xxxatat456[.]com:53
+- p5.dddgata789[.]com:53
+- P5.lpjulidny7[.]com:53
+Figure 7 illustrates the threat leveraging DNS servers 8.8.8[.]8 and 8.8.4[.]4 to resolve the IP address of the C2 domain names. Then, the threat establishes contact with these IP addresses and awaits commands from the attackers.
+Once a connection is established with the C2 server, the threat actor gains the capability to send commands to the client. Table 1 lists the C2 commands.
+| Command Case | Description |
+| 2 | Stop |
+| 3 | Launch DDoS attack |
+| 6 | Download file from remote server |
+| 7 | Upload local file to remote server |
+| 8 | Send system information to the C2 server |
+| 9 | Get configuration file |
+Table 1. XorDDoS commands.
+The XorDDoS malware uses multiple persistence mechanisms. It creates scheduled autorun tasks that trigger malware execution every three minutes and configures an autorun service to launch the threat during system startup.
+To evade detection, the threat turns its process into a background service that runs independently of the current user session. It does this to avoid process termination signals from users and to disguise itself as a legitimate process.
+During the dynamic analysis by our sandbox, we found that the XorDDoS malware dropped ELF executables with a little variance to its original file for its persistence on the victim's system. Such self-replication behavior generated a huge number of malware executables during the active periods of XorDDoS campaigns. Despite their high degree of similarity, the replicas could confuse some file hash-based detection systems.
+Between December 2022 and August 2023, we identified over 26,000 such replicated malware samples within the victims’ systems, which the threat generated from approximately 800 initial samples. Throughout the various campaigns in this timeframe, we have observed these malware samples infiltrating networks across various organizations on a global scale, including in the following industries:
+- Semiconductor
+- Telecom
+- Transportation
+- Finance
+- Insurance
+- Retail
+After successfully infecting victims' devices, the attackers monitored and coordinated the botnet via C2 commands. Our investigation started with the associated C2 domains. When we cross-checked the WHOIS information of these domains and their related malicious traffic, we found that the attackers had registered and used them to carry malicious traffic for several years.
+In addition to the most recent attack, the owners of these domains orchestrated another substantial campaign in 2022. We plot the distribution of malware delivery from the previous campaign in Figure 8.
+The attackers propagated the majority of their malware in this campaign during February, March and August 2022. A comparative analysis between last year's campaign and the current one reveals a remarkable similarity in the threat employed, accompanied by minor variations in network infrastructure.
+When we analyzed the passive DNS traffic requesting the C2 domains, we found the attackers changed IP addresses for these domains in preparation for this year's campaign. Figure 9 illustrates the trend of the DNS resolutions for the domains to the newly assigned IPs.
+The new resolutions began on July 28. Before Aug. 8, the daily traffic volume remained relatively low. Between Aug. 8 and Aug. 18, there was a noticeable surge in malware activity marked by approximately 24,000 malicious DNS requests daily.
+From Aug. 19-22, the campaign entered an intense attacking phase, generating over 22 times more traffic every day. A particularly notable spike occurred on Aug. 20, when we recorded 961,438 DNS requests for the C2 domains.
+Table 2 lists the new DNS resolutions involved in the recent attacking traffic. Among the four unique C2 root domains, the threat establishes communication with 16 distinct subdomains. One of the domains (dddgata789[.]com) is unresolvable, while the remaining hostnames correspond to a total of 13 IP addresses sourced from two legitimate public hosting providers.
+| C2 Domains | Name Server | C2 Subdomains | IP Addresses | Autonomous System |
+| xxxatat456[.]com | name-services[.]com | aaa.xxxatat456[.]com
+b12.xxxatat456[.]com ppp.xxxatat456[.]com www.ppp.xxxatat456[.]com www.xxxatat456[.]com |
+142.0.138[.]41
+142.0.138[.]42 142.0.138[.]43 142.0.138[.]44 142.4.106[.]73 142.4.106[.]75 192.74.236[.]33 192.74.236[.]34 192.74.236[.]35 |
+54600 |
+| gggatat456[.]com | name-services[.]com | aaa.gggatat456[.]com
+ppp.gggatat456[.]com www1.gggatat456[.]com www.ppp.gggatat456[.]com |
+142.0.138[.]41
+142.0.138[.]42 142.0.138[.]43 142.4.106[.]73 142.4.106[.]74 142.4.106[.]75 142.4.106[.]76 192.74.236[.]33 192.74.236[.]34 192.74.236[.]35 192.74.236[.]36 |
+54600 |
+| lpjulidny7[.]com | domaincontrol[.]com | p0.lpjulidny7[.]com
+p2.lpjulidny7[.]com p3.lpjulidny7[.]com p4.lpjulidny7[.]com p5.lpjulidny7[.]com |
+34.98.99[.]30 | 396982 |
+| dddgata789[.]com | domaincontrol[.]com | ddd.dddgata789[.]com
+p5.dddgata789[.]com |
+N/A | N/A |
+Table 2. Network infrastructure of the latest XorDDoS campaign.
+Although many security vendors have designated the C2 hostnames as dedicated attacking endpoints and subsequently blocked them, a challenge arises regarding the associated IP addresses. Given that these IP addresses also facilitate legitimate domains, a simplistic blocking approach becomes impracticable. Consequently, the attacker can retain these IP addresses for future operations even if the C2 domains are blocked. This underscores the importance of extending the scope of protection beyond the dedicated malicious hosts.
+Figure 10 visualizes the network infrastructures of XorDDoS attacks. The left part of the image displays the structure of the recent campaign. All malware instances establish connections with C2 IP addresses in the United States.
+The right side depicts the 2022 campaign, during which attackers distributed C2 servers across various European countries, including France, Germany and Italy. Despite the change in IP addresses, they remain tethered to the same set of C2 hostnames illustrated in the middle of Figure 10.
+This insight leads us to a crucial discovery. These C2 IP addresses can be used as signatures for identifying XorDDoS Trojans. Specifically, any samples communicating with more than three of these C2 IP addresses can be deemed malicious.
+Given that the C2 IP addresses used in the XorDDoS campaign are shared web hosting infrastructure, definitively classifying isolated connections as malicious or benign becomes challenging. Therefore, we propose that multiple connections to these IP addresses within a brief time frame can serve as a better indicator of C2 traffic.
+This behavior strongly suggests C2 activity rather than legitimate network traffic. To enhance our detection capabilities, we leverage these attacking network endpoints to generate advanced signatures for detecting malware activities. These signatures incorporate multiple network entities, enabling us to effectively identify and mitigate malware communication sessions that might otherwise evade detection based solely on single-entity analysis.
+The XorDDoS Trojan spread around the world during July and August 2023. This threat infects Linux devices and transforms them into zombies for launching DDoS attacks. The attackers coordinate the botnet with C2 domains that they have abused before. However, they have recently relocated their C2 servers to new IP addresses from public hosting services.
+We conducted a comprehensive investigation to unveil the underlying attacking network infrastructure. Leveraging this insight, we craft advanced signatures to detect malware activities involving nondedicated attacking hosts.
+Palo Alto Networks customers receive protection against the ongoing attacks through the following cloud-delivered security services:
+- Advanced WildFire identifies and thwarts malware delivery attempts.
+- DNS Security effectively prevents the resolution of C2 hostnames.
+- Advanced URL Filtering blocks the web requests to malicious URLs.
+- Next-Generation Firewall with the Advanced Threat Prevention security subscription can help block malware C2 traffic via the following Threat Prevention signatures: 13306, 13811.
+As we labeled all C2 hostnames as malicious prior to the inception of the recent campaign, DNS Security and Advanced URL Filtering thwarted all DNS and web requests directed toward them. Since July 2023, we have consistently observed a sustained level of malicious traffic attempting to visit these hostnames.
+Figure 11 depicts this trend, illustrating that DNS Security prevented an average of 3,903 daily DNS requests, while Advanced URL Filtering effectively blocked 246 daily web requests targeted at the C2 hostnames.
+Figure 12 provides the geographical distribution of the attacking traffic. Between July and August 2023, the attackers successfully infiltrated victims' systems operating in 21 different countries. This widespread reach underscores the global impact of the campaign. A substantial proportion of the attacking traffic is concentrated in Africa, South Asia and Southeast Asia, where we recorded over 77% of total attacks.
+Special thanks to Shireen Hsu and Wanjin Li for their help with improving this article. Additional IoCs provided by William Gamazo.
+IPs
+- 23.252.167[.]35
+- 34.98.99[.]30
+- 66.102.253[.]30
+- 98.126.8[.]114
+- 103.25.9[.]245
+- 103.233.83[.]245
+- 103.240.141[.]50
+- 104.247.217[.]167
+- 113.10.246[.]145
+- 119.147.145[.]198
+- 142.0.138[.]41
+- 142.0.138[.]42
+- 142.0.138[.]43
+- 142.0.138[.]44
+- 142.4.106[.]73
+- 142.4.106[.]74
+- 142.4.106[.]75
+- 142.4.106[.]76
+- 162.251.95[.]209
+- 174.139.217[.]145
+- 183.56.173[.]144
+- 183.56.173[.]156
+- 183.60.202[.]2
+- 183.136.213[.]96
+- 192.74.236[.]33
+- 192.74.236[.]34
+- 192.74.236[.]35
+- 192.74.236[.]36
+- 203.12.202[.]137
+Domains
+- 0o557[.]com
+- 604418589[.]xyz
+- www.98syn[.]com
+- aldz[.]xyz
+- syn.aldz[.]xyz
+- p.assword[.]xyz
+- linux.bc5j[.]com
+- cdn.netflix2cdn[.]com
+- dddgata789[.]com
+- b12.dddgata789[.]com
+- d14.dddgata789[.]com
+- ddd.dddgata789[.]com
+- p5.dddgata789[.]com
+- ww.dnstells[.]com
+- ndns.dsaj2a[.]com
+- ndns.dsaj2a[.]org
+- gh.dsaj2a1[.]org
+- ndns.dsaj2a1[.]org
+- www.enoan2107[.]com
+- a381422.f3322[.]net
+- 1107791273.f3322[.]org
+- aa369369.f3322[.]org
+- shaoqian.f3322[.]org
+- xlxl.f3322[.]org
+- cdn.finance1num[.]com
+- baidu.gddos[.]com
+- soft8.gddos[.]com
+- gggatat456[.]com
+- aaa.gggatat456[.]com
+- b12.gggatat456[.]com
+- g14.gggatat456[.]com
+- ppp.gggatat456[.]com
+- www.ppp.gggatat456[.]com
+- www1.gggatat456[.]com
+- 8uc.gwd58[.]com
+- ww.gzcfr5axf6[.]com
+- www.gzcfr5axf6[.]com
+- ww.gzcfr5axf7[.]com
+- ndns.hcxiaoao[.]com
+- ns1.hostasa[.]org
+- ns2.hostasa[.]org
+- ns3.hostasa[.]org
+- ns4.hostasa[.]org
+- linux.jum2[.]com
+- lpjulidny7[.]com
+- p0.lpjulidny7[.]com
+- p2.lpjulidny7[.]com
+- p3.lpjulidny7[.]com
+- p4.lpjulidny7[.]com
+- p5.lpjulidny7[.]com
+- 2w5.mc150[.]cn
+- ww.myserv012[.]com
+- nishabud[.]com
+- aaaaaaaaaa.re67das[.]com
+- ww.s9xk32a[.]com
+- ww.s9xk32b[.]com
+- ww.s9xk32c[.]com
+- ww.search2c[.]com
+- ssh.upx[.]wang
+- www.wangzongfacai[.]com
+- bb.wordpressau[.]com
+- bbb.wordpressau[.]com
+- xran[.]xyz
+- xxxatat456[.]com
+- aaa.xxxatat456[.]com
+- b12.xxxatat456[.]com
+- ppp.xxxatat456[.]com
+- www.ppp.xxxatat456[.]com
+- www.xxxatat456[.]com
+- x14.xxxatat456[.]com
+- zryl[.]online
+- b8c4d68755d09e9ad47e0fa14737b3d2d5ad1246de5ef1b3c794b1339d8fe9f8
+- 265a38c6dee58f912ff82a4e7ce3a32b2a3216bffd8c971a7414432c5f66ef11
+- 1e823ae1e8d2689f1090b09dc15dc1953fa0d3f703aec682214750b9ef8795f1
+- 989a371948b2c50b1d45dac9b3375cbbf832623b30e41d2e04d13d2bcf76e56b
+- 20f202d4a42096588c6a498ddb1e92f5b7531cb108fca45498ac7cd9d46b6448
+- 9c5fc75a453276dcd479601d13593420fc53c80ad6bd911aaeb57d8da693da43
+- ce0268e14b9095e186d5d4fe0b3d7ced0c1cc5bd9c4823b3dfa89853ba83c94f
+- aeb29dc28699b899a89c990eab32c7697679f764f9f33de7d2e2dc28ea8300f5

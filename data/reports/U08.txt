@@ -1,0 +1,140 @@
+This article aims to simplify cloud logging best practices for each major cloud service provider (CSP) while considering security, regulatory and business requirements.
+As more organizations migrate their business operations to the cloud, a crucial question arises: “What logging should we enable in order to monitor and secure our cloud environment?” To answer that question holistically, organizations must consider many factors, including:
+- Business needs
+- Regulatory requirements
+- Security use cases
+- Cost optimization
+Amazon Web Services (AWS), Azure and Google Cloud Platform (GCP) provide various unique logging configurations for visibility into cloud resources. These diverse logs, when aggregated, constitute the organization's cloud logging framework.
+Defining cloud logging requirements can be overwhelming. Organizations often use multiple CSPs, which have varying terminology, logging types and retention periods. This article explains the key components of a successful, customizable cloud logging framework.
+Disclaimer: The information in this article regarding legal and regulatory requirements is being provided for general awareness only and does not constitute legal advice. Always consult a qualified lawyer on any specific legal problem or matter, including but not limited to logging and data requirements applicable to your organization.
+Organizations can gain help assessing cloud security posture through the Unit 42 Cloud Security Assessment.
+| Related Unit 42 Topics | AWS, Azure, GCP, Kubernetes |
+To understand the types of cloud activities to monitor, cloud practitioners must first understand the difference between the data plane and the control plane. While the data plane supplies the base functionality of each cloud service provider, the control plane is a layer above that and manages the cloud resource operations themselves.
+The data plane provides the underlying function of the CSP service, such as:
+- Connecting into a virtual machine
+- Placing items into object-level storage
+- Creating a database table
+The control plane, on the other hand, enables the administration and management of resources within each CSP. For example:
+- Logging into a CSP console
+- Making API calls to modify resources
+- Creating new resources
+While both data and control planes exist within every CSP, their native logging capabilities vary. Control plane logging exists for each CSP by default, but with different configurations available. This is in contrast to data plane logging, for which logging does not exist by default.
+Understanding these distinctions clarifies the various logging components within each CSP and their relevance to business needs.
+Organizations should consider a variety of factors when determining which logs to ingest to create an effective cloud logging strategy. To maximize the use of the cloud logs across all business functions and IT teams, centralizing the logs into a Security Information and Event Management (SIEM) solution allows for increased visibility and utility. The “one size fits all” approach does not meet specific logging and retention requirements for every organization and ends up being extremely cost prohibitive. Organizations must prioritize based on their specific business needs.
+For example, retail companies could prioritize operational availability by ingesting performance logs related to critical sales functions. Performance logs vary per system but they record metrics pertaining to the running of the resource. For example, if a lot of network traffic slowed down response times on a web application server, performance logs would record and alert on the network performance issue. Conversely, the financial sector could prioritize logging all interactions with financial databases while retaining them for extended periods to meet regulatory compliance.
+The following categories, while broad, provide a foundation for defining logging requirements. Regardless of industry vertical, organizations should consider the subsequent topics.
+Critical business functions include the systems, applications and processes necessary to ensure the availability of business operations. Critical business functions will differ based on each organization's unique requirements.
+For example, some companies need to maintain a certain level of uptime on their website due to contractual obligations with stakeholders. Other organizations may need to ensure timely data processing due to regulatory requirements. Clearly defining these critical business functions and their dependencies is the first step in creating informed logging decisions.
+Conducting Business Impact Analyses (BIAs) supports this by identifying and assessing the potential effects of disruptive events to critical business operations, such as natural disasters, cyberattacks or systemic technology failures. BIAs estimate the financial and operational impact of such disruptions, considering factors like lost revenue, recovery costs and regulatory fines.
+Figure 1 provides an example decision diagram for considering how various business decisions impact overall logging criticality.
+After identifying these critical business functions, organizations should prioritize ingesting the appropriate logs for them. For example, collecting data plane network logging provides visibility into inbound network traffic to determine whether a performance issue with a critical service stems from increased user activity.
+Similarly, if virtual machines within an autoscaling group report issues scaling to meet demand, collecting audit logs at the control plane level will help identify the reason for the failed deployment. Autoscaling consists of resources being automatically created or destroyed to meet the demands of an application or service.
+In autoscaling environments, terminated instances can lose logs without proper collection and aggregation strategies. To mitigate this risk, organizations can implement centralized logging by exporting logs to persistent storage or a logging service, allowing the preservation of critical data even as virtual machines cycle. By aligning logging requirements with business needs, organizations can create a strategic approach to log retention and ingestion, ensuring visibility into essential operational and security events.
+Organizations should identify applicable regulatory frameworks to prevent legal penalties, maintain customer trust and ensure responsible data handling. These frameworks often impose specific data retention and logging requirements, influencing the type of logs an organization must collect and store.
+To navigate these complexities, collaborating with the organization’s compliance and legal teams can help clarify applicable regulatory requirements, which largely depend on the organization’s industry, location and types of data processed. A proactive approach to regulatory alignment helps ensure adherence to legal mandates while supporting secure and transparent business operations.
+The following are some of the common regulatory frameworks that may apply to organizations:
+This regulation applies to organizations processing personal data of European Union residents, regardless of the organization's location. It mandates data privacy and protection, including but not limited to, what data can be logged and individuals' rights to their data. For instance, GDPR’s Article 17 (e.g., “the right to be forgotten”) requires organizations to delete personal data upon request in certain circumstances, requiring an organization to accurately locate and remove data.
+A U.S. regulation for protecting sensitive protected health information (PHI). HIPAA dictates strict requirements for logging access to and modification of PHI, along with data retention and security controls. For example, HIPAA’s audit control standards may require healthcare organizations to log every instance of access to a patient’s medical record, providing a comprehensive audit trail in the event of unauthorized access or a data breach.
+This regulation applies to any organization handling payment card information, mandating specific logging and retention requirements for system components involved in card processing. For instance, an online retailer may be required to log every instance of database access where it has stored credit card information, including timestamps, user IDs and the specific action performed.
+National Institute of Standards and Technology (NIST) Cybersecurity Framework and NIST Special Publications (SP) 800-Series:
+While not strictly regulatory frameworks, these provide valuable information security guidance and best practices for organizations across various sectors. They often influence the development of industry-specific regulations, as many industries (e.g., finance, energy, telecommunications) have their own specific logging and data protection regulations.
+For example, a financial institution adopting these recommendations might log all instances of someone attempting to access account information outside of normal business hours. This could increase its ability to detect and respond to potential malicious activity by allowing the organization to maintain a more robust security posture even in the absence of a specific legal mandate.
+Logging establishes a baseline of information necessary to equip security teams with the data to support security monitoring, threat hunting and incident response activities. These logs should provide:
+- Detailed audit trails of user activity
+- System changes
+- Security-relevant events
+- The complete context of an incident
+For effective incident response, logging should cover a range of activity across the network perimeter, internal system interactions and user behaviors. This enables responders to determine the extent of unauthorized actions. Insufficient logging can obscure threat actor activity, potentially jeopardizing regulatory compliance and critical security decisions.
+For example, the threat actor group JavaGhost exploits victims’ cloud environments to establish phishing infrastructure targeting other organizations. Audit logs capture the creation of this infrastructure on the control plane, but detecting phishing emails sent from compromised resources requires enabling data plane logs. Ensuring visibility into both planes allows organizations to proactively identify, contain and mitigate threats before they escalate. More information about these attacks can be found in this recent Unit 42 research: JavaGhost’s Persistent Phishing Attacks From the Cloud.
+To meet regulatory and security requirements, organizations often default to logging as much data as possible “just in case.” This method increases costs and hinders log analysis by creating more extraneous data to sort through to understand suspicious activities.
+For example, the AWS Simple Storage Service (S3), which helps organizations store objects, provides the ability to log data events either in AWS CloudTrail or via S3 server access logging. While enabling one of these features provides ample visibility into S3 data events, costs can escalate dramatically if not managed properly. Managing the costs of storing the data can include transitioning data to different S3 bucket storage types or shortening retention periods. Excessive data volume can also hinder efficient query and analysis.
+Furthermore, excessive logging potentially violates privacy regulations, as certain regulatory frameworks (such as GDPR Article 5(1)(c)) emphasize collecting and retaining only necessary logs. Instead of indiscriminate logging, organizations should consider adopting a targeted logging strategy. This involves clearly defining business, regulatory and security requirements to optimize ingestion and retention costs. By doing this, organizations can optimize the ingestion and retention costs associated with logging.
+For easier comparison across AWS, Azure and GCP, we've grouped common services into high-level categories. These categories include:
+- Audit
+- Compute
+- Network
+- Secrets
+- Cloud-native storage
+- Database
+- Kubernetes
+Each category typically requires both data and control plane level logging to gain comprehensive visibility into all activity. Consider these categories in light of your organization's specific business, regulatory and security needs.
+Audit logs provide a comprehensive record of user activities and system changes, including configuration modifications, administrative actions and resource deployments. These logs primarily capture control plane operations, including a range of management-type activities. AWS, Azure and GCP enable audit logging by default, ensuring visibility into critical administrative events.
+Regarding identity logging, AWS and GCP integrate authentication, authorization and login events within their audit logs, whereas Azure maintains separate identity-specific log types. Understanding these differences helps organizations tailor monitoring strategies for security and compliance. Additional information about audit logs can be found in the Visualizing Cloud Log Events section.
+Compute logs provide information about resources like virtual machines and serverless functions. The creation, deletion and modification events of these resources live within the audit logs, while details such as memory and CPU usage exist within data plane logs unique to each CSP.
+Additional information, such as the actual execution of a serverless function, also exists within the data plane logs. With the prevalence of compute resources in most CSP environments, data plane logging is essential for visibility into their usage.
+Network appliance services in AWS, Azure and GCP provide an additional layer of security that helps protect cloud workloads. Networking-related events, such as firewalls blocking incoming network connections, network flows and network configuration changes, exist within both control and data plane logs.
+Organizations must specifically enable data plane logging for full visibility into network connection type events. The high storage costs associated with network logging make cost optimization a key consideration.
+As discussed in the General Logging Consideration section, network visibility gaps impact both incident response investigations and routine troubleshooting activities when these logs do not exist.
+The concept of secrets commonly arises when learning about the cloud. Secrets represent any data or information an organization deems sensitive and wants to store in a secure location with limited access.
+Each CSP has unique services that provide this functionality with accompanying logs that record the entities interacting with and retrieving the data such as recording the updating the secret value or modifying its description. These secrets include anything from credentials and API keys to environment variables. Control plane and data plane logging provide a detailed audit trail of secret modification, retrieval and creation, which allows visibility into the lifecycle of these resources.
+In addition to traditional database services, CSPs introduce cloud-native storage solutions typically built for objects. Objects encompass everything from files and documents to snapshots and backups.
+These non-relational data types require data plane logging for visibility into object interaction. Depending on the sensitivity of the data, observability might play an important role in the general logging considerations as discussed in the Regulatory and Data Requirements section above.
+When considering logging visibility into cloud-native storage, note that threat actors commonly target it for data exfiltration. This fact impacts the decision of whether to log data access.
+Each CSP provides unique cloud-native database services that organizations can incorporate into various applications or environments. Database transaction logs provide a comprehensive understanding of actions taken within the database, representing a key source of information for compliance, regulatory and security considerations.
+Similar to the compute and cloud-native storage categories, to review interactions with the database contents themselves, only data plane logging shows these events. If the database contains sensitive data, understanding specific data interactions by a threat actor or rogue employee requires pre-enabled data plane logging. Otherwise, the full scope of activity will not be available to determine data access details.
+Organizations commonly host their Kubernetes clusters in cloud environments, due to the scalability of the platforms, making Kubernetes a significant logging source to consider for complete visibility. At a high level, Kubernetes clusters are composed of various virtual machines (nodes) that run containers within those virtual machines.
+Numerous logging configurations exist within Kubernetes to track a cluster’s evolving state. These logs provide visibility into the interactions between the Kubernetes cluster and the control plane, authentication requests and actions taken within a cluster, to name a few examples.
+In addition to control plane logging, data plane logging plays a crucial role in capturing workload-level events within Kubernetes clusters. These logs provide visibility into container-level operations, including:
+- Network traffic between pods
+- File system interactions
+- Resource consumption metrics
+Data plane logs help security teams detect anomalies such as:
+- Unauthorized lateral movement
+- Excessive resource utilization
+- Suspicious network activity within a cluster
+By aggregating data plane logs alongside control plane logs, organizations can gain a comprehensive view of all Kubernetes activity.
+Now that we have an understanding of the background and purpose of the various log categories for enterprise environments, we can address the specific logs available for each category by CSP.
+The following table (Table 1) breaks down the common AWS, Azure and GCP services that exist in each category, listing the different logging options. As previously mentioned, the creation, modification and deletion of each service resource resides within the different audit logs for control plane visibility, but the data plane logging does not exist by default.
+Each service listed in the table has management level events recorded in the audit services, while the information in the parentheses represents the data plane logging available for each type.
+| AWS | Azure | GCP | |
+| Audit | CloudTrail | Microsoft Entra ID audit, Microsoft Entra ID sign-in, Azure Activity, Microsoft Graph Activity* (DS) | Admin Activity audit, Policy Denied audit, System Event audit |
+| Compute | Elastic Cloud Compute (EC2), Lambda (DE) | Virtual machines, Azure Functions (DS) | Virtual machines, Cloud Run (DA) |
+| Network | VPC (VPC flow logs), Route 53 (resolver query logs), web application firewall (WAF) (web access control traffic logs), Elastic Load Balancer (ELB) (access logs) | Virtual networks (virtual network flow logs, legacy: NSG flow logs), Azure Firewall (DS), Azure Load Balancer (virtual network flow logs), Azure Front Door WAF (DS), Azure WAF (Application Gateway DS), Azure DNS (Security policy DS) | VPC network (VPC flow logs, Firewall Rules Logging), Cloud DNS (DNS policy query logging), Cloud load balancer (load balancer request logs) |
+| Secrets | Secrets Manager, Key Management Service (KMS) | Key Vault (DS) | Secret Manager (DA), Cloud KMS (DA) |
+| Cloud-native storage | Simple Storage Service (S3) (DE and S3 server access logs) | Storage Account (DS) | Cloud Storage (DA, usage logs) |
+| Database | DynamoDB (DE), Relational Database Service (RDS) (DE and database logs), Redshift (audit logs) | Cosmo DB (DS), Azure SQL Database (audit logs) | BigQuery (DA), Datastore (DA), Cloud SQL (DA) |
+| Kubernetes | Elastic Kubernetes Service (EKS) (cluster logging) | Azure Kubernetes Service (AKS) (DS) | Google Kubernetes Engine (GKE) (Kubernetes control plane logs) |
+Table 1. Cloud Service Provider logging options by category.
+- * = Unlike other logs in the Audit category, Microsoft Graph Activity logs do not exist by default.
+- DS = Microsoft diagnostic settings
+- DE = CloudTrail Data events
+- DA = Data Access audit logs
+Understanding the nuances within each CSP’s logs forms the cornerstone to comprehending cloud logging holistically. We illustrate the complexities of cloud logging below with examples from AWS, Azure and GCP, showing where specific events appear across the different CSPs.
+Each scenario shows a user:
+- Logging in to the CSP’s interactive console
+- Creating a new user
+- Interacting with and creating resources specific to that CSP
+The associated key in Figure 2 explains which logs exist by default and which logs require enablement.
+Figure 3 shows the creation of a new identity and access management (IAM) user, Lambda function and S3 bucket that all result in artifacts present in the CloudTrail logs. In this case, the Lambda function execution does not exist by default and requires additional data plane logging for complete visibility.
+Figure 4 shows similar administrative activities to those detailed in Figure 3, but this time for Azure. Due to the variety of Azure log types, the audit activities exist across multiple log types, but activities such as Key Vault key retrieval require additional data plane logging similar to the AWS Lambda function execution.
+Figure 5 details a GCP example of creating a new user and failing to create a new virtual private cloud (VPC) network with the resulting logs present in the GCP audit logs. To view the retrieval of a secret from Secret Manager, data plane logging must be enabled akin to the secret retrieval action in Azure while AWS has Secret Manager retrieval enabled by default. Similar to AWS, fewer audit log types aggregate all the control plane activity.
+We provide default retention information in the Additional Resources section below rather than in the Logging Table above, due to the evolving nature of log retention policies. This allows us to provide direct links to the most up-to-date CSP documentation.
+Note that some data plane logs, such as GCP VPC flow logs, only record sampled events, even when fully enabled. This level of detailed knowledge helps organizations understand visibility gaps when trying to troubleshoot or investigate within AWS, Azure and GCP.
+Finally, the Logging Table only represents a selection of cloud services and does not cover additional enterprise logging required for comprehensive visibility into an environment. For complete visibility into an environment, organizations must also consider additional logging, such as:
+- Host
+- Application
+- Third-party appliance
+Successfully navigating cloud logging requires a holistic approach that balances security, regulatory and business needs and cost optimization. The diverse logging services, tools and best practices of each CSP add to this challenge. Following the best practices laid out within this article will help provide organizations with the knowledge to better understand what logging and monitoring enables the best visibility into their unique cloud environments, while also providing them with better detection and ultimately prevention capabilities.
+By implementing the best practices described in this article, organizations should be better positioned to effectively monitor, secure and manage their cloud environments.
+Organizations can gain help assessing cloud security posture through the Unit 42 Cloud Security Assessment.
+- North America: Toll Free: +1 (866) 486-4842 (866.4.UNIT42)
+- UK: +44.20.3743.3660
+- Europe and Middle East: +31.20.299.3130
+- Asia: +65.6983.8730
+- Japan: +81.50.1790.0200
+- Australia: +61.2.4062.7950
+- India: 00080005045107
+- How CloudTrail works – AWS CloudTrail User Guide
+- Microsoft Entra ID Default Retention – Microsoft Learn
+- Quotas and limits – Documentation, Google Cloud
+- What Is AWS CloudTrail? – AWS CloudTrail User Guide
+- What are Microsoft Entra audit logs? – Microsoft Learn
+- What are Microsoft Entra sign-in logs? – Microsoft Learn
+- Azure Activity Log event schema – Microsoft Learn
+- Access Microsoft Graph activity logs – Microsoft Learn
+- Types of Audit Logs – Google Cloud
+- What is GDPR, the EU’s new data protection law? – GDPR
+- Summary of the HIPAA Privacy Rule – U.S. Department of Health and Human Services
+- PCI Data Security Standard (PCI DSS) – PCI Security Standards Council
+- NIST Cybersecurity Framework – National Institute of Standards and Technology
+- NIST Special Publication 800-series – National Institute of Standards and Technology

